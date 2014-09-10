@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="Hyperstore.CodeAnalysis.MsBuild.HyperstoreGeneratorTask"  AssemblyFile="Hyperstore.CodeAnalysis.MsBuild.dll"/>
+
+  <!-- ################################################################################ -->
+  <!-- Integration into the normal build process -->
+  <!-- ################################################################################ -->
+
+  <PropertyGroup>
+    <CompileDependsOn>
+      HyperstoreCodeGenerators;
+      $(CompileDependsOn)
+      </CompileDependsOn>
+  </PropertyGroup>
+
+  <!--
+  ================================================================
+                Code generation task
+  ================================================================
+  -->
+  <Target Name="HyperstoreCodeGenerators">
+       
+    <!--
+      Select all the .domain files from the current project
+    -->
+    <ItemGroup>
+      <DomainFiles Include="@(None)" Condition="'%(Extension)' == '.domain'"/>
+    </ItemGroup>
+
+    <Message Importance="normal" Text="Hyperstore - Generate source files from domain files."/>
+
+    <HyperstoreGeneratorTask Config="$(Configuration)" DomainFiles="@(DomainFiles)" OutputPath="$(IntermediateOutputPath)" >
+      
+      <Output ItemName="Compile" TaskParameter="GeneratedCodeFiles" />
+      <Output ItemName="FileWrites" TaskParameter="GeneratedCodeFiles" />
+
+    </HyperstoreGeneratorTask>
+    
+  </Target>
+</Project>

@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0862F8EB-F295-4720-AEF0-8A8EBB451665}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Hyperstore.CodeAnalysis</RootNamespace>
+    <AssemblyName>Hyperstore.CodeAnalysis</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\lib\Debug45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\lib\Release45\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Compilation\DomainManager.cs" />
+    <Compile Include="Compilation\DomainMerger.cs" />
+    <Compile Include="Compilation\FileModelResolver.cs" />
+    <Compile Include="Compilation\HyperstoreCompilation.cs" />
+    <Compile Include="Compilation\HyperstoreCompilationOptions.cs" />
+    <Compile Include="Compilation\HyperstoreCompiler.cs" />
+    <Compile Include="Compilation\IDomainResolver.cs" />
+    <Compile Include="Compilation\IModelBuilder.cs" />
+    <Compile Include="Compilation\ModelBuilder.cs" />
+    <Compile Include="Compilation\ModelMap.cs" />
+    <Compile Include="Compilation\SemanticContext _Properties.cs" />
+    <Compile Include="Compilation\SemanticContext _References.cs" />
+    <Compile Include="Compilation\SemanticContext.cs" />
+    <Compile Include="Compilation\SemanticContext_Elements.cs" />
+    <Compile Include="Generation\CodeHelper.cs" />
+    <Compile Include="Generation\CSharpGenerator.cs" />
+    <Compile Include="Generation\HyperstoreGeneratorContext.cs" />
+    <Compile Include="Generation\ICSharpGenerator.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Symbols\IAttributeSymbol.cs" />
+    <Compile Include="Symbols\ICommandSymbol.cs" />
+    <Compile Include="Symbols\IConstraintSymbol.cs" />
+    <Compile Include="Symbols\ICSharpCodeSymbol.cs" />
+    <Compile Include="Symbols\IDomainSymbol.cs" />
+    <Compile Include="Symbols\IElementSymbol.cs" />
+    <Compile Include="Symbols\IEntitySymbol.cs" />
+    <Compile Include="Symbols\IEnumSymbol.cs" />
+    <Compile Include="Symbols\IExternSymbol.cs" />
+    <Compile Include="Symbols\IMemberSymbol.cs" />
+    <Compile Include="Symbols\INamedSymbol.cs" />
+    <Compile Include="Symbols\IOppositeReferenceSymbol.cs" />
+    <Compile Include="Symbols\IPropertyReferenceSymbol.cs" />
+    <Compile Include="Symbols\IPropertySymbol.cs" />
+    <Compile Include="Symbols\IReferenceSymbol.cs" />
+    <Compile Include="Symbols\IRelationshipDefinitionSymbol.cs" />
+    <Compile Include="Symbols\IRelationshipSymbol.cs" />
+    <Compile Include="Symbols\ISymbol.cs" />
+    <Compile Include="Symbols\ITypeSymbol.cs" />
+    <Compile Include="Symbols\IUsingSymbol.cs" />
+    <Compile Include="Symbols\UsingSymbol.cs" />
+    <Compile Include="Symbols\AttributeSymbol.cs" />
+    <Compile Include="Symbols\CommandSymbol.cs" />
+    <Compile Include="Symbols\ConstraintSymbol.cs" />
+    <Compile Include="Symbols\CSharpCodeSymbol.cs" />
+    <Compile Include="Symbols\Definition.cs" />
+    <Compile Include="Symbols\DomainSymbol.cs" />
+    <Compile Include="Symbols\ElementSymbol.cs" />
+    <Compile Include="Symbols\EntitySymbol.cs" />
+    <Compile Include="Symbols\EnumSymbol.cs" />
+    <Compile Include="Symbols\ExternSymbol.cs" />
+    <Compile Include="Symbols\HyperstoreSymbolVisitor.cs" />
+    <Compile Include="Symbols\HyperstoreSymbolWalker.cs" />
+    <Compile Include="Symbols\LazyRef.cs" />
+    <Compile Include="Symbols\MemberSymbol.cs" />
+    <Compile Include="Symbols\NamedSymbol.cs" />
+    <Compile Include="Symbols\OppositeReferenceSymbol.cs" />
+    <Compile Include="Symbols\PropertyReferenceSymbol.cs" />
+    <Compile Include="Symbols\PropertySymbol.cs" />
+    <Compile Include="Symbols\ReferenceSymbol.cs" />
+    <Compile Include="Symbols\RelationshipSymbol.cs" />
+    <Compile Include="Symbols\Symbol.cs" />
+    <Compile Include="Symbols\TypeSymbol.cs" />
+    <Compile Include="Syntax\CSharpCodeBlock.cs" />
+    <Compile Include="HyperstoreGrammar.cs" />
+    <Compile Include="Syntax\CSharpCodeParser.cs" />
+    <Compile Include="Syntax\Diagnostic.cs" />
+    <Compile Include="Syntax\HyperstoreSyntaxTree.cs" />
+    <Compile Include="Syntax\HyperstoreSyntaxVisitor.cs" />
+    <Compile Include="Syntax\Nodes\AttributeSyntax.cs" />
+    <Compile Include="Syntax\Nodes\CommandDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\CommandMemberDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\ConstraintDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\DeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\DefaultValueSyntax.cs" />
+    <Compile Include="Syntax\Nodes\DomainSyntax.cs" />
+    <Compile Include="Syntax\Nodes\ElementDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\EntityDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\EnumDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\ExternalDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\ListSyntax.cs" />
+    <Compile Include="Syntax\Nodes\MemberSyntax.cs" />
+    <Compile Include="Syntax\Nodes\OppositeReferenceSyntax.cs" />
+    <Compile Include="Syntax\Nodes\PropertySyntax.cs" />
+    <Compile Include="Syntax\Nodes\QualifiedNameSyntax.cs" />
+    <Compile Include="Syntax\Nodes\ReferenceSyntax.cs" />
+    <Compile Include="Syntax\Nodes\RelationshipDeclarationSyntax.cs" />
+    <Compile Include="Syntax\Nodes\RelationshipDefinitionSyntax.cs" />
+    <Compile Include="Syntax\Nodes\SeparatedListSyntax.cs" />
+    <Compile Include="Syntax\Nodes\SeparatedListSyntaxToken.cs" />
+    <Compile Include="Syntax\Nodes\SyntaxNode.cs" />
+    <Compile Include="Syntax\Nodes\TokenNode.cs" />
+    <Compile Include="Syntax\Nodes\TokenOrNode.cs" />
+    <Compile Include="Syntax\Nodes\UsesDeclarationSyntax.cs" />
+    <Compile Include="Syntax\SyntaxWalker.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Symbols\Symbols.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Irony\Hyperstore.CodeAnalysis.Irony.csproj">
+      <Project>{d81f5c91-d7db-46e5-bc99-49488fb6814c}</Project>
+      <Name>Hyperstore.CodeAnalysis.Irony</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

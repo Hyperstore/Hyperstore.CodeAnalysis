@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>Hyperstore.DomainLanguage</id>
+        <version>0.9.212</version>
+        <title>Hyperstore Domain Definition Language</title>
+        <authors>Zenasoft</authors>
+        <projectUrl>http://www.zenasoft.com</projectUrl>
+        <iconUrl>http://www.zenasoft.com/wp-content/uploads/2014/04/Logo-Hyperstore1.gif</iconUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Hyperstore Domain Definition Language template. Version earlier than 0.9.200 are not updatable, you must uninstall and reinstall the package. This package uses a specific version of Irony (http://irony.codeplex.com)</description>
+        <copyright>Zenasoft</copyright>
+        <tags>Hyperstore</tags>
+        <dependencies>
+            <dependency id="Hyperstore" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\lib\debug45\Hyperstore.CodeAnalysis.dll" target="build\Hyperstore.CodeAnalysis.dll" />
+        <file src="..\lib\debug45\Hyperstore.CodeAnalysis.Irony.dll" target="build\Hyperstore.CodeAnalysis.Irony.dll" />
+        <file src="..\lib\debug45\Hyperstore.CodeAnalysis.Irony.pdb" target="build\Hyperstore.CodeAnalysis.Irony.pdb" />
+        <file src="..\lib\debug45\Hyperstore.CodeAnalysis.MsBuild.dll" target="build\Hyperstore.CodeAnalysis.MsBuild.dll" />
+        <file src="..\lib\debug45\Hyperstore.CodeAnalysis.MsBuild.pdb" target="build\Hyperstore.CodeAnalysis.MsBuild.pdb" />
+        <file src="..\lib\debug45\Hyperstore.CodeAnalysis.pdb" target="build\Hyperstore.CodeAnalysis.pdb" />
+        <file src="Hyperstore.CodeAnalysis.targets" target="build\Hyperstore.DomainLanguage.targets" />
+        <file src="ItemTemplates\Definition.domain.pp" target="content\Model\Definition.domain.pp" />
+        <file src="tools\install.ps1" target="tools\install.ps1" />
+    </files>
+</package>
