@@ -286,17 +286,18 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                 if (!Domain.IsDynamic)
                 {
-                    if (clazz.References != null && clazz.References.Count() > 0)
+
+                    var propertyReferences = clazz
+                                        .References.Where(r => r.Relationship is RelationshipSymbol).Select(r => new { Name = r.Name, Relationship = r.Relationship, Opposite = false, WhereClause = (string)null });
+                    var opposites = clazz
+                                        .OppositeReferences.Where(r => r.Relationship is RelationshipSymbol).Select(r => new { Name = r.Name, Relationship = r.Relationship, Opposite = true, WhereClause = (string)null });
+                    var properties = clazz
+                                        .Properties.Where(r => r.PropertyType is RelationshipSymbol && !r.IsCalculatedProperty).Select(r => new { Name = r.Name, Relationship = r.PropertyType as IRelationshipSymbol, Opposite = false, WhereClause = r.WhereClause.Script });
+
+                    var references = properties.Concat(propertyReferences).Concat(opposites);
+
+                    if (references.Any())
                     {
-                        var propertyReferences = clazz
-                                            .References.Where(r => r.Relationship is RelationshipSymbol).Select(r => new { Name = r.Name, Relationship = r.Relationship, Opposite = false, WhereClause = (string)null });
-                        var opposites = clazz
-                                            .OppositeReferences.Where(r => r.Relationship is RelationshipSymbol).Select(r => new { Name = r.Name, Relationship = r.Relationship, Opposite = true, WhereClause = (string)null });
-                        var properties = clazz
-                                            .Properties.Where(r => r.PropertyType is RelationshipSymbol && !r.IsCalculatedProperty).Select(r => new { Name = r.Name, Relationship = r.PropertyType as IRelationshipSymbol, Opposite = false, WhereClause = r.WhereClause.Script });
-
-                        var references = propertyReferences.Concat(opposites).Concat(properties);
-
                         foreach (var reference in references)
                         {
                             GenerateReferenceFields(reference.Relationship, reference.Name, reference.Opposite, reference.WhereClause != null);
