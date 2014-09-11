@@ -94,10 +94,13 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 var rel = node as Syntax.RelationshipDeclarationSyntax;
                 var def = rel.Definition;
 
-                var tmp = new RelationshipSymbol(node, Domain, nameToken);
+                var symbol = new RelationshipSymbol(node, Domain, nameToken);
 
-                tmp.Definition = new RelationshipDefinitionSymbol(node, tmp, this.Compilation, def.Name, def.SourceMultiplicity != null && def.SourceMultiplicity.Text == "*", def.TargetType, def.TargetMultiplicity != null && def.TargetMultiplicity.Text == "*", def.Kind.Text == "=>");
-                return tmp;
+                symbol.Definition = new RelationshipDefinitionSymbol(node, symbol, this.Compilation, 
+                                        def.Name, def.SourceMultiplicity != null && def.SourceMultiplicity.Text == "*", 
+                                        def.TargetType, def.TargetMultiplicity != null && def.TargetMultiplicity.Text == "*", 
+                                        def.Kind.Text == "=>");
+                return symbol;
             });
         }
 
@@ -138,19 +141,19 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 BuildConstraints(element, element.Constraints, node.Constraints);
 
                 var set = new HashSet<string>();
-                foreach (var val in node.Members)
+                foreach (var member in node.Members)
                 {
-                    var txt = val.Name.Text;
-                    if (!set.Add(txt) || element.Members.Any(m => m.Name == txt))
+                    var memberName = member.Name.Text;
+                    if (!set.Add(memberName) || element.Members.Any(m => m.Name == memberName))
                     {
-                        Compilation.AddDiagnostic(val.Name, "Duplicate member {0} in element {1}", txt, elementName);
+                        Compilation.AddDiagnostic(member.Name, "Duplicate member {0} in element {1}", memberName, elementName);
                         continue;
                     }
 
-                    var prop = val as Syntax.PropertySyntax;
+                    var prop = member as Syntax.PropertySyntax;
                     if (prop != null)
                     {
-                        var p = new PropertySymbol(this.Compilation, val, element, prop.PropertyType, prop.Name);
+                        var p = new PropertySymbol(this.Compilation, member, element, prop.PropertyType, prop.Name);
 
                         p.WhereClause = prop.DefaultValue.Kind != null && prop.DefaultValue.Kind.Text == "where" ? new CSharpCodeSymbol(prop.DefaultValue, p, prop.DefaultValue.Code.Text, CSharpCodeKind.WhereClause) : null;
                         p.SelectClause = prop.DefaultValue.Kind != null && prop.DefaultValue.Kind.Text == "select" ? new CSharpCodeSymbol(prop.DefaultValue, p, prop.DefaultValue.Code.Text, CSharpCodeKind.SelectClause) : null;
@@ -166,27 +169,38 @@ namespace Hyperstore.CodeAnalysis.Compilation
                             Compilation.AddDiagnostic(prop, "Default value can not be empty.");
 
                         BuildConstraints(p, p.Constraints, prop.Constraints);
-                        BuildAttributes(p, p.Attributes, val.Attributes);
+                        BuildAttributes(p, p.Attributes, member.Attributes);
                         element.Members.Add(p);
                         continue;
                     }
-                    var reference = val as Syntax.ReferenceDeclarationSyntax;
+                    var reference = member as Syntax.ReferenceDeclarationSyntax;
                     if (reference != null)
                     {
-                        var p = new PropertyReferenceSymbol(this.Compilation, val, element, reference.RelationshipName, reference.Definition.Name);
-                        p.Definition = new RelationshipDefinitionSymbol(val, p, this.Compilation, node.Name, reference.Definition.SourceMultiplicity != null && reference.Definition.SourceMultiplicity.Text == "*", reference.Definition.TargetType, reference.Definition.TargetMultiplicity != null && reference.Definition.TargetMultiplicity.Text == "*", reference.Definition.Kind.Text == "=>");
+                        var propertyReference = new PropertyReferenceSymbol(this.Compilation, member, element, reference.RelationshipName, reference.Definition.Name);
 
-                        BuildAttributes(p, p.Attributes, val.Attributes);
-                        element.Members.Add(p);
+                        propertyReference.Definition = new RelationshipDefinitionSymbol(member, propertyReference, this.Compilation, 
+                                                            node.Name, 
+                                                            reference.Definition.SourceMultiplicity != null && reference.Definition.SourceMultiplicity.Text == "*", 
+                                                            reference.Definition.TargetType, 
+                                                            reference.Definition.TargetMultiplicity != null && reference.Definition.TargetMultiplicity.Text == "*", 
+                                                            reference.Definition.Kind.Text == "=>");
+                        BuildAttributes(propertyReference, propertyReference.Attributes, member.Attributes);
+                        element.Members.Add(propertyReference);
                         continue;
                     }
-                    var opposite = val as Syntax.OppositeReferenceSyntax;
+
+                    var opposite = member as Syntax.OppositeReferenceSyntax;
                     if (opposite != null)
                     {
-                        var p = new OppositeReferenceSymbol(this.Compilation, val, element, opposite.RelationshipName, opposite.Name);
-                        p.Definition = new RelationshipDefinitionSymbol(val, p, this.Compilation, opposite.TargetType, opposite.TargetMultiplicity != null && opposite.TargetMultiplicity.Text == "*", node.Name, opposite.SourceMultiplicity != null && opposite.SourceMultiplicity.Text == "*", opposite.Kind.Text == "<=");
-                        BuildAttributes(p, p.Attributes, val.Attributes);
-                        element.Members.Add(p);
+                        var propertyReference = new OppositeReferenceSymbol(this.Compilation, member, element, opposite.RelationshipName, opposite.Name);
+                        propertyReference.Definition = new RelationshipDefinitionSymbol(member, propertyReference, this.Compilation, 
+                                                            opposite.TargetType, 
+                                                            opposite.TargetMultiplicity != null && opposite.TargetMultiplicity.Text == "*", 
+                                                            node.Name, 
+                                                            opposite.SourceMultiplicity != null && opposite.SourceMultiplicity.Text == "*", 
+                                                            opposite.Kind.Text == "<=");
+                        BuildAttributes(propertyReference, propertyReference.Attributes, member.Attributes);
+                        element.Members.Add(propertyReference);
                         continue;
                     }
                 }

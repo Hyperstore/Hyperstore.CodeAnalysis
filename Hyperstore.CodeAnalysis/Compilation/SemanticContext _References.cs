@@ -49,8 +49,20 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     if (existing == null)
                     {
                         var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, parent, reference.Definition.End, reference.Definition.Cardinality, reference.Definition.IsEmbedded), relationshipName);
-
                         domain.Members.Add(relationshipName, vrel);
+                        vrel.Definition.PropertySource = reference.Name;
+                    }
+                    else
+                    {
+                        var relationship = existing as RelationshipSymbol;
+                        if (relationship == null)
+                        {
+                            AddDiagnostic(reference.NameToken, "An existing element exists with the same name ({0}) but it's not a relationship.", relationshipName);
+                        }
+                        else
+                        {
+                            relationship.Definition.PropertySource = reference.Name;
+                        }
                     }
                 }
             }
@@ -58,6 +70,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             {
                 var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, parent, reference.Definition.End, reference.Definition.Cardinality, reference.Definition.IsEmbedded), reference.RelationshipReference.Name);
                 domain.Members.Add(vrel.Name, vrel);
+                vrel.Definition.PropertySource = reference.Name;
             }
             else
             {
@@ -70,6 +83,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     var def2 = reference.Definition;
                     if (!def1.Equals(def2))
                         AddDiagnostic(reference.NameToken, "Relationship cardinality mismatch with an existing relationship");
+                    reference.Relationship.Definition.PropertySource = reference.Name;
                 }
             }
         }
@@ -109,6 +123,19 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     {
                         var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, reference.Definition.Source, parent, reference.Definition.Cardinality, reference.Definition.IsEmbedded),relationshipName);
                         domain.Members.Add(relationshipName, vrel);
+                        vrel.Definition.PropertyEnd = reference.Name;
+                    }
+                    else
+                    {
+                        var relationship = existing as RelationshipSymbol;
+                        if (relationship == null)
+                        {
+                            AddDiagnostic(reference.NameToken, "An existing element exists with the same name ({0}) but it's not a relationship.", relationshipName);
+                        }
+                        else
+                        {
+                            relationship.Definition.PropertyEnd = reference.Name;
+                        }
                     }
                 }
             }
@@ -116,6 +143,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             {
                 var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, reference.Definition.Source, parent, reference.Definition.Cardinality, reference.Definition.IsEmbedded), reference.RelationshipReference.Name);
                 domain.Members.Add(vrel.Name, vrel);
+                vrel.Definition.PropertyEnd = reference.Name;
             }
             else
             {
@@ -128,6 +156,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     var def2 = reference.Definition;
                     if (!def1.Equals(def2))
                         AddDiagnostic(reference.NameToken, "Relationship cardinality mismatch with an existing relationship");
+                    reference.Relationship.Definition.PropertyEnd = reference.Name;
                 }
             }
 

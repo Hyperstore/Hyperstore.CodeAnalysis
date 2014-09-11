@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Hyperstore.CodeAnalysis.Editor..e6846676-bad3-4f05-b6a9-d0722fa25d33" Version="0.9.200" Language="en-US" Publisher="Zenasoft" />
+    <Identity Id="Hyperstore.CodeAnalysis.Editor..e6846676-bad3-4f05-b6a9-d0722fa25d33" Version="0.9.201" Language="en-US" Publisher="Zenasoft" />
     <DisplayName>Hyperstore.CodeAnalysis.Editor</DisplayName>
     <Description>This is a sample classifier extension to the Visual Studio Editor.</Description>
   </Metadata>

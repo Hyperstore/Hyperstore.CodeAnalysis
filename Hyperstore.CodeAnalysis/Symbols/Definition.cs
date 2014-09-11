@@ -31,6 +31,10 @@ namespace Hyperstore.CodeAnalysis.Symbols
 
         public bool IsEmbedded { get; private set; }
 
+        internal string PropertySource { get; set; }
+
+        internal string PropertyEnd { get; set; }
+
         internal RelationshipDefinitionSymbol(SyntaxNode node, Symbol parent, ElementSymbol source, ElementSymbol end, RelationshipCardinality cardinality, bool isEmbedded)
             : base(node, parent, null)
         {
@@ -113,12 +117,12 @@ namespace Hyperstore.CodeAnalysis.Symbols
 
         string IRelationshipDefinitionSymbol.EndProperty
         {
-            get { return this.EndReference.Name; }
+            get { return this.PropertyEnd; }
         }
 
         string IRelationshipDefinitionSymbol.SourceProperty
         {
-            get { return this.SourceReference.Name; }
+            get { return this.PropertySource; }
         }
     }
 }
