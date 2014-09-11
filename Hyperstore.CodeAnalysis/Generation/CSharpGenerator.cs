@@ -340,28 +340,39 @@ namespace Hyperstore.CodeAnalysis.Generation
                 {
                     foreach (var reference in clazz.References)
                     {
-                        foreach (var att in reference.Attributes.Where(a => a.Name == "attribute"))
-                        {
-                            ctx.WriteLine(2, "[{0}]", att.Arguments.First().Replace(@"\""", "\""));
-                        }
+                        GeneratePropertyAttributes(reference);
                         GenerateCode(reference);
+                    }
+                }
+
+                if (clazz.OppositeReferences != null)
+                {
+                    foreach (var opposite in clazz.OppositeReferences)
+                    {
+                        GeneratePropertyAttributes(opposite);
+                        GenerateCode(opposite);
                     }
                 }
 
                 if (clazz.Properties != null)
                 {
-                    foreach (var att in clazz.Properties)
+                    foreach (var prop in clazz.Properties)
                     {
-                        foreach (var attr in att.Attributes.Where(a => a.Name == "attribute"))
-                        {
-                            ctx.WriteLine(2, "[{0}]", attr.Arguments.First().Replace(@"\""", "\""));
-                        }
-                        GenerateCode(att);
+                        GeneratePropertyAttributes(prop);
+                        GenerateCode(prop);
                     }
                 }
 
                 ctx.WriteLine(1, "}}");
                 ctx.WriteLine();
+            }
+        }
+
+        private void GeneratePropertyAttributes(INamedSymbol symbol)
+        {
+            foreach (var att in symbol.Attributes.Where(a => a.Name == "attribute"))
+            {
+                ctx.WriteLine(2, "[{0}]", att.Arguments.First().Replace(@"\""", "\""));
             }
         }
 
