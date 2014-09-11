@@ -80,7 +80,8 @@ namespace Hyperstore.CodeAnalysis.Generation
             {
                 using (ctx.Push(GenerationScope.MetadataOnBeforeLoad))
                 {
-                    ctx.WriteLine(2, "protected override void OnSchemaLoaded(ISchema schema) {{");
+                    ctx.WriteLine(2, "protected override void OnSchemaLoaded(ISchema schema)");
+                    ctx.WriteLine(2, "{{");
                     ctx.WriteLine(3, "base.OnSchemaLoaded(schema);");
 
                     foreach (var clazz in domain.Elements)
@@ -106,24 +107,28 @@ namespace Hyperstore.CodeAnalysis.Generation
             {
                 if (!String.IsNullOrWhiteSpace(domain.Namespace))
                 {
-                    ctx.WriteLine(0, "namespace {0} {{", domain.Namespace);
+                    ctx.WriteLine(0, "namespace {0}", domain.Namespace);
+                    ctx.WriteLine(0, "{{");
                 }
 
                 var observable = domain.IsObservable ? " | DomainBehavior.Observable" : String.Empty;
 
-                ctx.WriteLine(1, "public partial class {0}Definition : Abstract{0}Definition {{", domain.Name);
+                ctx.WriteLine(1, "public partial class {0}Definition : Abstract{0}Definition", domain.Name);
+                ctx.WriteLine(1, "{{");
                 ctx.WriteLine(2, "public {0}Definition() : this(\"{1}\", DomainBehavior.Standard)", domain.Name, domain.Namespace);
                 ctx.WriteLine(2, "{{ }}");
                 ctx.WriteLine(1, "}}");
                 ctx.WriteLine();
 
-                ctx.WriteLine(1, "public partial class {0}Definition : Abstract{0}Definition {{", domain.Name);
+                ctx.WriteLine(1, "public partial class {0}Definition : Abstract{0}Definition", domain.Name);
+                ctx.WriteLine(1, "{{");
                 ctx.WriteLine(2, "public {0}Definition(string name, DomainBehavior behavior=DomainBehavior.Standard) : base(name, behavior{1})", domain.Name, observable);
                 ctx.WriteLine(2, "{{ }}");
                 ctx.WriteLine(1, "}}");
                 ctx.WriteLine();
 
-                ctx.WriteLine(1, "public abstract class Abstract{0}Definition : SchemaDefinition {{", domain.Name);
+                ctx.WriteLine(1, "public abstract class Abstract{0}Definition : SchemaDefinition", domain.Name);
+                ctx.WriteLine(1, "{{");
 
                 ctx.WriteLine(2, "protected Abstract{0}Definition(string name, DomainBehavior behavior) : base(name, behavior)", domain.Name);
                 ctx.WriteLine(2, "{{}}");
@@ -132,7 +137,8 @@ namespace Hyperstore.CodeAnalysis.Generation
                 using (ctx.Push(GenerationScope.MetadataDefinitionBegin))
                 {
                     ctx.WriteLine();
-                    ctx.WriteLine(2, "protected override void DefineSchema(ISchema schema) {{");
+                    ctx.WriteLine(2, "protected override void DefineSchema(ISchema schema)");
+                    ctx.WriteLine(2, "{{");
 
                     foreach (var child in domain.Externals)
                     {
@@ -179,6 +185,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                 using (ctx.Push(GenerationScope.MetadataDefinitionEnd))
                 {
                     ctx.WriteLine(2, "}}");
+                    ctx.WriteLine();
                 }
             }
 
@@ -223,7 +230,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                     var ext = prop.PropertyType as ExternSymbol;
                     if (ext != null && ext.Kind != ExternalKind.Primitive && ext.Kind != ExternalKind.Enum)
                     {
-                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(), prop.PropertyType.Name, prop.Name, defaultValue);
+                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(), prop.PropertyType.Name, ext.Alias, defaultValue);
                     }
                     else
                     {
@@ -642,7 +649,9 @@ namespace Hyperstore.CodeAnalysis.Generation
                     ctx.WriteLine(3, "get;");
                 else
                 {
-                    ctx.WriteLine(3, "get {{");
+                    ctx.WriteLine(3, "get");
+                    ctx.WriteLine(3, "{{");
+
                     ctx.WriteLine(4, "SetCalculatedPropertySource(\"{0}\");", name);
                     ctx.WriteLine(4, "return _{0};", name.ToCamelCase());
                     ctx.WriteLine(3, "}}");
@@ -773,6 +782,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                     ctx.WriteLine(3, "set {{ SetPropertyValue(\"{0}\", value); }}", prop.Name);
                 }
                 ctx.WriteLine(2, "}}");
+                ctx.WriteLine();
             }
 
             var parent = prop.Parent as IElementSymbol;
@@ -787,7 +797,7 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                 using (ctx.Push(GenerationScope.Begin))
                 {
-                    ctx.WriteLine(2, "public static IIndex {0} {{get;protected set;}}", indexName);
+                    ctx.WriteLine(2, "public static IIndex {0} {{ get; protected set; }}", indexName);
                 }
             }
 
@@ -831,7 +841,7 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                     using (ctx.Push(GenerationScope.Begin))
                     {
-                        ctx.WriteLine(2, "public static ISchemaRelationship {0} {{get;protected set;}}", rel.Name);
+                        ctx.WriteLine(2, "public static ISchemaRelationship {0} {{ get; protected set; }}", rel.Name);
                     }
                 }
                 else
@@ -840,7 +850,7 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                     using (ctx.Push(GenerationScope.Begin))
                     {
-                        ctx.WriteLine(2, "public static SchemaRelationship<{0}> {0} {{get;protected set;}}", rel.Name);
+                        ctx.WriteLine(2, "public static SchemaRelationship<{0}> {0} {{ get; protected set; }}", rel.Name);
                     }
                 }
             }
@@ -859,11 +869,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                 {
                     if (Domain.IsDynamic)
                     {
-                        ctx.WriteLine(2, "public static SchemaEntity {0} {{get;protected set;}}", clazz.Name);
+                        ctx.WriteLine(2, "public static SchemaEntity {0} {{ get; protected set; }}", clazz.Name);
                     }
                     else
                     {
-                        ctx.WriteLine(2, "public static SchemaEntity<{0}> {0} {{get;protected set;}}", clazz.Name);
+                        ctx.WriteLine(2, "public static SchemaEntity<{0}> {0} {{ get; protected set; }}", clazz.Name);
                     }
                 }
             }
@@ -874,25 +884,31 @@ namespace Hyperstore.CodeAnalysis.Generation
             if (clazz is IRelationshipSymbol)
             {
                 var rel = clazz as IRelationshipSymbol;
-                ctx.WriteLine(2, "public {0} Start {{", rel.Definition.Source.AsFullName());
+                ctx.WriteLine(2, "public {0} Start", rel.Definition.Source.AsFullName());
+                ctx.WriteLine(2, "{{");
                 ctx.WriteLine(3, "get {{ return ({0})((IModelRelationship)this).Start; }}", rel.Definition.Source.AsFullName());
                 ctx.WriteLine(2, "}}");
-
-                ctx.WriteLine(2, "public {0} End {{", rel.Definition.End.AsFullName());
-                ctx.WriteLine(3, "get {{ return ({0})((IModelRelationship)this).End; }}", rel.Definition.End.AsFullName());
-                ctx.WriteLine(2, "}}");
-
-                ctx.WriteLine(2, "protected {0}() {{}}", rel.Name);
                 ctx.WriteLine();
 
-                ctx.WriteLine(2, "public {0}({1} start, {2} end, Identity id=null) : base(start, end) {{", rel.Name, rel.Definition.Source.Name, rel.Definition.End.Name);
+                ctx.WriteLine(2, "public {0} End", rel.Definition.End.AsFullName());
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "get {{ return ({0})((IModelRelationship)this).End; }}", rel.Definition.End.AsFullName());
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine();
+
+                ctx.WriteLine(2, "protected {0}() {{ }}", rel.Name);
+                ctx.WriteLine();
+
+                ctx.WriteLine(2, "public {0}({1} start, {2} end, Identity id=null) : base(start, end)", rel.Name, rel.Definition.Source.Name, rel.Definition.End.Name);
+                ctx.WriteLine(2, "{{");
             }
             else
             {
                 var baseArgs = clazz.SuperType == null ? "domainModel, null, id" : "domainModel, id";
                 ctx.WriteLine(2, "protected {0}() {{}}", clazz.Name);
                 ctx.WriteLine();
-                ctx.WriteLine(2, "public {0}(IDomainModel domainModel=null, Identity id=null) : base({1}) {{", clazz.Name, baseArgs);
+                ctx.WriteLine(2, "public {0}(IDomainModel domainModel=null, Identity id=null) : base({1})", clazz.Name, baseArgs);
+                ctx.WriteLine(2, "{{");
             }
 
             ctx.WriteLine(2, "}}");

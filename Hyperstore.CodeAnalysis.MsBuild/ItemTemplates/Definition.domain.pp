@@ -3,7 +3,7 @@
 domain $assemblyname$.MyModel
 {
     def entity NamedElement {
-        Name : string check "Name is required" : !String.IsNullOrEmpty(self.Name);
+        Name : string check error "Name is required" : !String.IsNullOrEmpty(self.Name);
     } 	 
 
     def entity Library extends NamedElement
@@ -19,7 +19,7 @@ domain $assemblyname$.MyModel
     }
 
     def entity Member extends NamedElement {
-        Library *<- Library : LibraryHasMembers;
+        Library *<= Library : LibraryHasMembers;
     }
 
     def entity Loan {

@@ -157,7 +157,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
             generator.StartGenerate(ctx);
             foreach (var domain in _merger.Domains)
+            {
+                ctx.NewDomain();
                 generator.GenerateCode(domain);
+            }
             generator.EndGenerate();
 
             return ctx.ToString();

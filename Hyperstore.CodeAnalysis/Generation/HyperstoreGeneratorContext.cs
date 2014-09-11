@@ -34,6 +34,7 @@ namespace Hyperstore.CodeAnalysis.Generation
             }
         }
 
+        private readonly StringBuilder _global;
         private TextWriter[] _writers;
         private Stack<TextWriter> _current;
 
@@ -41,6 +42,7 @@ namespace Hyperstore.CodeAnalysis.Generation
         {
             _writers = new TextWriter[6];
             _current = new Stack<TextWriter>();
+            _global = new StringBuilder();
         }
 
         internal void Write(string msg, params object[] args)
@@ -88,7 +90,23 @@ namespace Hyperstore.CodeAnalysis.Generation
             _current.Pop();
         }
 
+        public void NewDomain()
+        {
+            if (_writers != null)
+            {
+                _global.AppendLine(Flush());
+            }
+            _writers = new TextWriter[6];
+            _current = new Stack<TextWriter>();
+        }
+
         public override string ToString()
+        {
+            _global.AppendLine(Flush());
+            return _global.ToString();
+        }
+
+        private string Flush()
         {
             StringBuilder sb = new StringBuilder();
             var writer = _writers[(int)GenerationScope.Begin];
