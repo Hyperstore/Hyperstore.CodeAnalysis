@@ -33,6 +33,8 @@ namespace Hyperstore.CodeAnalysis.Symbols
 
         public IEnumerable<CommandSymbol> Commands { get { return Members.Values.OfType<CommandSymbol>(); } }
 
+        public IEnumerable<ValueObjectSymbol> ValueObjects { get { return Members.Values.OfType<ValueObjectSymbol>(); } }
+
         public List<UsingSymbol> Usings { get { return _usings; } }
 
         internal Dictionary<string, TypeSymbol> Members { get; set; }
@@ -96,6 +98,11 @@ namespace Hyperstore.CodeAnalysis.Symbols
         IEnumerable<IExternSymbol> IDomainSymbol.Externals
         {
             get { return this.Externals; }
+        }
+
+        IEnumerable<IValueObjectSymbol> IDomainSymbol.ValueObjects
+        {
+            get { return this.ValueObjects; }
         }
 
         IEnumerable<IUsingSymbol> IDomainSymbol.Usings

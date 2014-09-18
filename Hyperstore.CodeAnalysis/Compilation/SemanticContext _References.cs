@@ -9,7 +9,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
     partial class SemanticContext : HyperstoreSymbolVisitor
     {
 
-        public override void VisitPropertyReferenceSymbol(PropertyReferenceSymbol reference)
+        public void VisitPropertyReferenceSymbol(PropertyReferenceSymbol reference)
         {
             var parent = reference.Parent as ElementSymbol;
             var domain = parent.Domain;
@@ -88,7 +88,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             }
         }
 
-        public override void VisitOppositeReferenceSymbol(OppositeReferenceSymbol reference)
+        public void VisitOppositeReferenceSymbol(OppositeReferenceSymbol reference)
         {
             var parent = reference.Parent as ElementSymbol;
             var domain = parent.Domain;

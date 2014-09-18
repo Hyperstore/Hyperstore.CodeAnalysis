@@ -32,7 +32,6 @@ namespace Hyperstore.CodeAnalysis.Syntax
 
             if (treeNode.ChildNodes.Count > 2)
             {
-                var child = treeNode.ChildNodes[2];
                 QualifiedIdentifier = treeNode.ChildNodes[2].AstNode as QualifiedNameSyntax;
                 AddChild(QualifiedIdentifier);
             }

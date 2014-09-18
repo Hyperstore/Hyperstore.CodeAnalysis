@@ -28,7 +28,7 @@ namespace Hyperstore.CodeAnalysis.Syntax
             if (parseTree.Root != null)
                 Root = parseTree.Root.AstNode as DomainSyntax;
 
-            SourceFilePath = path ?? Guid.NewGuid().ToString("G");
+            SourceFilePath = path;
 
             _diagnostics = new List<Diagnostic>();
             foreach (var m in parseTree.ParserMessages)
@@ -46,16 +46,11 @@ namespace Hyperstore.CodeAnalysis.Syntax
 
         public DomainSyntax Root { get; private set; }
 
-        [ThreadStatic]
-        private static Parser _parser;
+        private static LanguageData _language;
 
-        private static void InitializeParser()
+        static HyperstoreSyntaxTree()
         {
-            if (_parser == null)
-            {
-                var language = new LanguageData(new Hyperstore.CodeAnalysis.DomainLanguage.HyperstoreGrammar());
-                _parser = new Parser(language);
-            }
+            _language = new LanguageData(new Hyperstore.CodeAnalysis.DomainLanguage.HyperstoreGrammar());
         }
 
         public static HyperstoreSyntaxTree ParseText(string text, string path = "",
@@ -72,8 +67,8 @@ namespace Hyperstore.CodeAnalysis.Syntax
                 throw new ArgumentNullException("path");
             }
 
-            InitializeParser();
-            var parseTree = _parser.Parse(text, path);
+            var parser = new Parser(_language);
+            var parseTree = parser.Parse(text, path);
             var tree = new HyperstoreSyntaxTree(parseTree, path);
 
             if (tree.Root != null)

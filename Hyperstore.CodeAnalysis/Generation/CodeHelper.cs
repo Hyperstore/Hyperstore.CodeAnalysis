@@ -27,6 +27,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                 return ((IExternSymbol)element).FullName;
             }
 
+            if (element is IValueObjectSymbol)
+            {
+                return ((IValueObjectSymbol)element).Type.AsFullName();
+            }
+
             var domain = element.Parent as IDomainSymbol;
             return String.Format("global::{0}.{1}", domain.Namespace, element.Name);
         }

@@ -8,7 +8,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
 {
     partial class SemanticContext : HyperstoreSymbolVisitor
     {
-        public override void VisitEntitySymbol(EntitySymbol symbol)
+        public void VisitEntitySymbol(EntitySymbol symbol)
         {
 
             var element = symbol as ElementSymbol;
@@ -19,7 +19,42 @@ namespace Hyperstore.CodeAnalysis.Compilation
             CheckImplements(element);
         }
 
-        public override void VisitRelationshipSymbol(RelationshipSymbol symbol)
+        public void VisitValueObjectSymbol(ValueObjectSymbol element)
+        {
+            CheckConstraints(element.Constraints);
+
+            var type = element.TypeReference.Value as IExternSymbol;
+            bool error = true;
+            if (type != null && type.Kind == ExternalKind.Primitive)
+            {
+                switch (type.Name)
+                {
+                    case "string":
+                    case "int":
+                    case "bool":
+                    case "char":
+                    case "decimal":
+                    case "double":
+                    case "float":
+                    case "Guid":
+                    case "Int16":
+                    case "Int32":
+                    case "Int64":
+                    case "UInt16":
+                    case "UInt32":
+                    case "UInt64":
+                    case "DateTime":
+                    case "TimeSpan":
+                        error = false;
+                        break;
+                }
+            }
+
+            if (error)
+                AddDiagnostic(element.TypeReference.SyntaxTokenOrNode, "Invalid primitive type {0} for {1}. Only primitive types are allowed.", element.TypeReference.Name, element.Name);
+        }
+
+        public void VisitRelationshipSymbol(RelationshipSymbol symbol)
         {
             var element = symbol as ElementSymbol;
             CheckConstraints(element.Constraints);
@@ -43,7 +78,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 else
                 {
                     var ext = r.Value as IExternSymbol;
-                    if( ext == null || ext.Kind != ExternalKind.Interface)
+                    if (ext == null || ext.Kind != ExternalKind.Interface)
                         AddDiagnostic(r.SyntaxTokenOrNode, "Incorrect type {0} for {1}. Must be an interface declared by an extern interface statement.", r.Name, element.Name);
                 }
             }
@@ -73,7 +108,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
             if (element.SuperType != null)
             {
                 element.SuperType.AddDerived(element);
-                element.HasClassInheritance = true;
+                if (!element.HasAttribute("IgnoreGeneration")) // Else element will be not generated
+                    element.HasGeneratedClassInheritance = true;
             }
         }
     }

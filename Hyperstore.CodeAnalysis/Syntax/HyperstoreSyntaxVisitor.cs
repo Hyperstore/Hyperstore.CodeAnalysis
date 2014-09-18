@@ -43,6 +43,13 @@ namespace Hyperstore.CodeAnalysis.Syntax
                 VisitUsesDeclarationSyntax((UsesDeclarationSyntax)node);
             else if (node is DomainSyntax)
                 VisitDomainSyntax((DomainSyntax)node);
+            else if (node is ValueObjectDeclarationSyntax)
+                VisitValueObjectDeclarationSyntax((ValueObjectDeclarationSyntax)node);
+        }
+
+        protected virtual void VisitValueObjectDeclarationSyntax(ValueObjectDeclarationSyntax node)
+        {
+            DefaultVisit(node);
         }
 
         private void VisitQualifiedNameSyntax(QualifiedNameSyntax node)

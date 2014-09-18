@@ -50,23 +50,6 @@ namespace Hyperstore.CodeAnalysis.Syntax
 
         public SourceSpan Span { get; private set; }
 
-        //public TextSpan FullSpan
-        //{
-        //    get
-        //    {
-        //        var startNode = ChildNodes.FirstOrDefault() ?? this;
-        //        var endNode = ChildNodes.LastOrDefault() ?? this;
-
-        //        var trivia = startNode.LeadingTrivias.FirstOrDefault();
-        //        var startPos = trivia != null ? trivia.Span : startNode.Span;
-
-        //        trivia = endNode.TrailingTrivias.LastOrDefault();
-        //        var endPos = trivia != null ? trivia.Span : endNode.Span;
-
-        //        return new TextSpan(startPos.Start, endPos.End - startPos.Start.Position);
-        //    }
-        //}
-
         public int Position
         {
             get { return Span.Location.Position; }

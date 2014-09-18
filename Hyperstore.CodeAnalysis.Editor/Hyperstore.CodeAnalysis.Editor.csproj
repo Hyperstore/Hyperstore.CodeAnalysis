@@ -109,6 +109,9 @@
     <Compile Include="Parsers\Resolver\VSHyperstoreResolver.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Snippets\CSharp\Hyperstore\HYSession.snippet">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -118,6 +121,18 @@
       <Project>{0862f8eb-f295-4720-aef0-8a8ebb451665}</Project>
       <Name>Hyperstore.CodeAnalysis</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Irony\Hyperstore.CodeAnalysis.Irony.csproj">
+      <Project>{D81F5C91-D7DB-46E5-BC99-49488FB6814C}</Project>
+      <Name>Hyperstore.CodeAnalysis.Irony</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="HyperstoreSnippets.pkgdef">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />

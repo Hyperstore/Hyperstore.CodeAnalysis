@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using Hyperstore.CodeAnalysis.Syntax;
 using Irony.Ast;
 using Irony.Parsing;
-using Hyperstore.CodeAnalysis.Syntax;
 
 namespace Hyperstore.CodeAnalysis.DomainLanguage
 {
@@ -48,7 +43,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             var classDeclaration = new NonTerminal("EntityDeclarationSyntax", typeof(EntityDeclarationSyntax));
             var commandDeclaration = new NonTerminal("CommandDeclarationSyntax", typeof(CommandDeclarationSyntax));
             var memberDeclarations = new NonTerminal("MemberDeclarations", typeof(ListSyntax<MemberDeclarationSyntax>));
-            var commandMemberDeclarationList = new NonTerminal("CommandMemberDeclarations");
+            var commandMemberDeclarationList = new NonTerminal("CommandMemberDeclarations", typeof(ListSyntax<CommandMemberDeclarationSyntax>));
             var relationshipDeclaration = new NonTerminal("RelationshipDeclaration", typeof(RelationshipDeclarationSyntax));
             var attributeDeclaration = new NonTerminal("Attributes", typeof(PropertySyntax));
             var memberDeclaration = new NonTerminal("MemberDeclaration");
@@ -69,6 +64,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             var externalAttribut_opt = new NonTerminal("ExternalAttribut_opt");
             var usesDeclarationList = new NonTerminal("UsesDeclarations", typeof(ListSyntax<UsesDeclarationSyntax>));
             var usesDeclaration = new NonTerminal("UsesDeclaration", typeof(UsesDeclarationSyntax));
+            var valueObjectDeclaration = new NonTerminal("ValueObjectDeclaration", typeof(ValueObjectDeclarationSyntax));
 
             var generationAttributeList = new NonTerminal("Attributes", typeof(ListSyntax<AttributeSyntax>));
             var generationAttribute = new NonTerminal("Attribute", typeof(AttributeSyntax));
@@ -155,11 +151,16 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
                 classDeclaration
                 | enumDeclaration
                 | commandDeclaration
-                | relationshipDeclaration;
+                | relationshipDeclaration
+                | valueObjectDeclaration;
+
+            valueObjectDeclaration.Rule =
+                generationAttributeList + ToTerm("def") + partial_opt + ToTerm("valueObject", "valueObject") + identifier + ToTerm(":") + identifier + lBr
+                + constraintDeclaration_opt + rBr;
 
             classDeclaration.Rule =
-              generationAttributeList + ToTerm("def") + partial_opt + ToTerm("entity", "entity") + identifier + extends_opt + implements_opt + lBr + memberDeclarations + rBr
-              + constraintDeclaration_opt;
+                generationAttributeList + ToTerm("def") + partial_opt + ToTerm("entity", "entity") + identifier + extends_opt + implements_opt + lBr + memberDeclarations
+                + constraintDeclaration_opt + rBr;
 
             partial_opt.Rule =
                 Empty
@@ -185,10 +186,10 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
                 generationAttributeList + ToTerm("def") + ToTerm("command", "command") + identifier + lBr + commandMemberDeclarationList + rBr;
 
             commandMemberDeclarationList.Rule =
-                MakeStarRule(memberDeclarations, commandMemberDeclaration);
+                MakeStarRule(commandMemberDeclarationList, commandMemberDeclaration);
 
             commandMemberDeclaration.Rule =
-                 generationAttributeList + identifier + ":" + qualified_identifier + constraintDeclarations + ";";
+                 generationAttributeList + identifier + ":" + qualified_identifier  + ";";
 
             memberDeclarations.Rule =
               MakeStarRule(memberDeclarations, memberDeclaration);
@@ -202,12 +203,12 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             relationshipDeclaration.Rule =
               generationAttributeList + ToTerm("def") + partial_opt + ToTerm("relationship", "relationship") + identifier + extends_opt + implements_opt
               + "(" + relationshipDefinition + ")"
-              + lBr + memberDeclarations + rBr
-              + constraintDeclaration_opt;
+              + lBr + memberDeclarations
+              + constraintDeclaration_opt + rBr;
 
             constraintDeclaration_opt.Rule =
                 Empty
-                | constraintDeclarations + ";";
+                | ToTerm("constraints") + ToTerm(":") + constraintDeclarations + ";";
 
             // Propriétés
             attributeDeclaration.Rule =
@@ -271,7 +272,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             MarkPunctuation("{", "}", ":", ";", "(", ")", ",", "[", "]");
             this.RegisterBracePair("{", "}");
             this.MarkTransient(memberDeclaration, elementDeclaration);
-            RegisterKeywords("uses", "use", "partial", "where", "error", "warning", "entity", "extern", "*", "domain", "relationship", "command", "interface", "=>", "->", "<-", "<=", "def", "enum", "extends", "implements", "as", "constraint", "check", "validate", "compute");
+            RegisterKeywords("uses", "use", "partial", "where", "error", "valueObject", "constraints", "warning", "entity", "extern", "*", "domain", "relationship", "command", "interface", "=>", "->", "<-", "<=", "def", "enum", "extends", "implements", "as", "constraint", "check", "validate", "compute");
 
             LanguageFlags = LanguageFlags.CreateAst | Irony.Parsing.LanguageFlags.NewLineBeforeEOF;
 
@@ -366,5 +367,6 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
         //    }
         //    return null;
         //}
+
     }
 }

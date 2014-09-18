@@ -88,7 +88,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         if (activeSession != null)
                         {
                             activeSession.Properties.AddProperty("currentKey", currentKey);
-                            
+
                             activeSession.Start();
                             if (activeSession.IsDismissed)
                             {
@@ -123,10 +123,10 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
 
             }
 
-            if (IsWhiteSpaceOrSymbol(previousChar) && (char.IsLetter(key) || key == '_' || key == '.'))
+            if (IsWhiteSpaceOrSymbol(previousChar) && (char.IsLetter(key) || key == '_'))
                 return true;
-            else if (char.IsLetterOrDigit(previousChar) && key == '.')
-                return true;
+            //else if (char.IsLetterOrDigit(previousChar) && key == '.')
+            //    return true;
             //else if (key == '>' && (previousChar == '-' || previousChar == '='))
             //    return true;
             //else if (previousChar == '<' && (key == '-' || key == '='))

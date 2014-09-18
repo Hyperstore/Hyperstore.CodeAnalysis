@@ -32,7 +32,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
         {
             Keywords = new HashSet<string>
             {
-                "domain", "extends", "extern", "interface", "error", "warning", "enum", "as", "def", "entity", "relationship", "implements", "where", "compute", "select", "check", "validate", "command", "uses"
+                "domain", "extends", "extern", "interface", "error", "warning", "valueObject", "enum", "as", "def", "entity", "constraints", "relationship", "implements", "where", "compute", "select", "check", "validate", "command", "uses"
             };
         }
 
@@ -48,7 +48,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
         {
             if (_position < _buffer.Length)
             {
-                if (_currentChar == '\r')
+                if (_currentChar == '\n')
                 {
                     Line++;
                     Linepos = 0;
@@ -111,7 +111,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
 
                                 var r = CreateRegion(region, previousToken);
                                 result.Regions.Add(r);
-                                
+
                                 region = null;
                             }
                         }
@@ -136,7 +136,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
                 }
 
                 result.Tokens.Add(token);
-                if( !skipToken)
+                if (!skipToken)
                     token = NextToken();
                 skipToken = false;
             }
@@ -166,7 +166,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
             {
                 var r = new CSharpCodeParser(_buffer, _position).Parse();
                 token = new TokenInfo(TokenKind.CSharpCode, CreateSpan(_position, r.Item1 - _position), null, r.Item2);
-                _position = r.Item1+1;
+                _position = r.Item1 + 1;
                 NextChar(); // Skip final }
             }
             else if (_currentChar == Eof)
@@ -227,7 +227,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
                     NextChar();
                     return new TokenInfo(TokenKind.Keyword, CreateSpan(startPosition, _position - startPosition - 1), "<-");
                 }
-                if( oldChar == '=')
+                if (oldChar == '=')
                     return new TokenInfo(TokenKind.Keyword, CreateSpan(startPosition, _position - startPosition - 1), "=");
             }
 
@@ -272,7 +272,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
                 }
                 else
                 {
-                    if (_currentChar == '\r')
+                    if (IsNewLine(_currentChar))
                         multiline |= true;
                     NextChar();
                 }
@@ -294,13 +294,13 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
                     if (_currentChar != terminal)
                         return new TokenInfo(kind, CreateSpan(startPosition, _position - startPosition - 1), null, multiline);
                 }
-                else if (_currentChar == '\r' && !allowMultiline)
+                else if (IsNewLine(_currentChar) && !allowMultiline)
                 {
                     return new TokenInfo(kind, CreateSpan(startPosition, _position - startPosition - 1), null, multiline);
                 }
                 else
                 {
-                    if (_currentChar == '\r')
+                    if (IsNewLine(_currentChar))
                         multiline |= true;
                     NextChar();
                 }
@@ -309,26 +309,19 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
             return new TokenInfo(kind, CreateSpan(startPosition, _position - startPosition - 1), null, multiline);
         }
 
+        private bool IsNewLine(char ch)
+        {
+            return ch == '\r' || ch == '\n';
+        }
+
         private void SkipWhiteSpace()
         {
+
             while (true)
             {
-                while (true)
-                {
-                    if (_currentChar == Eof || !IsWhitespace(_currentChar))
-                        break;
-                    NextChar();
-                }
-
-                if (_currentChar == '#')
-                {
-                    do
-                    {
-                        NextChar();
-                    }
-                    while (_currentChar != '\r');
-                }
-                else break;
+                if (_currentChar == Eof || !IsWhitespace(_currentChar))
+                    break;
+                NextChar();
             }
         }
 

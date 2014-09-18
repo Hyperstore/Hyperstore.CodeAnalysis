@@ -38,6 +38,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             _tokenizer = textBuffer.Properties.GetOrCreateSingletonProperty<HyperstoreTokenizer>(() => new HyperstoreTokenizer());
         }
 
+        // TODO to implement in the tokenizer each token containing its next potential tokens
         private IEnumerable<Declaration> BuildCompletionNodes(ITrackingPoint position, ITextSnapshot snapshot, char currentKey)
         {
             _tokenizer.EnsuresReady(snapshot);
@@ -45,7 +46,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             var tokens = _tokenizer.Tokens;
 
             var declarations = new List<Declaration>();
-            var span = new Span(position.GetPosition(snapshot), 1);
+            var span = new global::Microsoft.VisualStudio.Text.Span(position.GetPosition(snapshot), 1);
 
             var region = regions.FirstOrDefault(r => span.OverlapsWith(r.Span.GetSpan(snapshot)));
             var token = tokens.LastOrDefault(t => t.Span.GetSpan(snapshot).Start < span.Start);
@@ -55,7 +56,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             {
                 token = tokens.GetPreviousToken(token);
             }
-
+            
             if (region == null)
             {
                 if (token == null)
@@ -72,6 +73,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                             declarations.Add(new Declaration { Title = "entity", Type = DeclarationType.Keyword });
                             declarations.Add(new Declaration { Title = "enum", Type = DeclarationType.Keyword });
                             declarations.Add(new Declaration { Title = "relationship", Type = DeclarationType.Keyword });
+                            declarations.Add(new Declaration { Title = "valueObject", Type = DeclarationType.Keyword });
                             return declarations;
 
                         case "extern":
@@ -98,22 +100,31 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         declarations.Add(new Declaration { Title = "def", Type = DeclarationType.Keyword });
                         declarations.Add(new Declaration { Title = "extern", Type = DeclarationType.Keyword });
                         declarations.Add(new Declaration { Title = "uses", Type = DeclarationType.Keyword });
+                        return declarations;                        
                     }
-                    else if (token.Kind != TokenKind.Keyword)
+
+                    if (token.Kind != TokenKind.Keyword)
                     {
                         if (definitionState == DefinitionState.Extern || definitionState == DefinitionState.Uses)
                         {
                             declarations.Add(new Declaration { Title = "as", Type = DeclarationType.Keyword });
                         }
-                        else if (definitionState != DefinitionState.Enum)
+                        else if (definitionState != DefinitionState.Enum && definitionState != DefinitionState.ValueObject)
                         {
                             if ((definitionState & DefinitionState.WithExtends) != DefinitionState.WithExtends)
                                 declarations.Add(new Declaration { Title = "extends", Type = DeclarationType.Keyword });
                             if ((definitionState & DefinitionState.WithImplements) != DefinitionState.WithImplements)
                                 declarations.Add(new Declaration { Title = "implements", Type = DeclarationType.Keyword });
                         }
+                        return declarations;
                     }
-                    else if (token.Kind == TokenKind.Keyword)
+
+                    if (definitionState == DefinitionState.Compute)
+                    {
+                        return declarations;
+                    }
+
+                    if (token.Kind == TokenKind.Keyword && _domain != null && definitionState != DefinitionState.ValueObject)
                     {
                         if (token.Value == "implements")
                             BuildInterfaceDeclarations(declarations);
@@ -127,65 +138,88 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             }
             else
             {
-                if (token != null && token.Kind != TokenKind.CSharpCode)
+                if (token != null)
                 {
-                    if (token.Value == "check" || token.Value == "validate")
+                    if (token.Kind != TokenKind.CSharpCode)
                     {
-                        declarations.Add(new Declaration { Title = "error", Type = DeclarationType.Keyword });
-                        declarations.Add(new Declaration { Title = "warning", Type = DeclarationType.Keyword });
-                        return declarations;
-                    }
+                        var definitionState = tokens.IsInDefinition(token);
+                        if (definitionState != DefinitionState.None)
+                        {
+                            if( definitionState == DefinitionState.Constraint )
+                            {
+                                if (token.Value == "check" || token.Value == "validate")
+                                {
+                                    declarations.Add(new Declaration { Title = "error", Type = DeclarationType.Keyword });
+                                    declarations.Add(new Declaration { Title = "warning", Type = DeclarationType.Keyword });
+                                }
+                                else
+                                {
+                                    if (token.Value == ":")
+                                    {
+                                        declarations.Add(new Declaration { Title = "check", Type = DeclarationType.Keyword });
+                                        declarations.Add(new Declaration { Title = "validate", Type = DeclarationType.Keyword });
+                                    }
+                                }
+                                return declarations;
+                            }
+                            
+                            if( definitionState == DefinitionState.Compute )
+                            {
+                                return declarations;
+                            }
 
-                    var definitionState = tokens.IsInDefinition(token);
-                    if (definitionState != DefinitionState.None)
-                    {
-                        if (token.Kind != TokenKind.Keyword)
-                        {
-                            if (definitionState == DefinitionState.Extern || definitionState == DefinitionState.Uses)
+                            if (token.Kind != TokenKind.Keyword)
                             {
-                                declarations.Add(new Declaration { Title = "as", Type = DeclarationType.Keyword });
+                                if (definitionState == DefinitionState.Extern || definitionState == DefinitionState.Uses)
+                                {
+                                    declarations.Add(new Declaration { Title = "as", Type = DeclarationType.Keyword });
+                                }
+                                else if (definitionState != DefinitionState.Enum && definitionState != DefinitionState.ValueObject)
+                                {
+                                    if ((definitionState & DefinitionState.WithExtends) != DefinitionState.WithExtends)
+                                        declarations.Add(new Declaration { Title = "extends", Type = DeclarationType.Keyword });
+                                    if ((definitionState & DefinitionState.WithImplements) != DefinitionState.WithImplements)
+                                        declarations.Add(new Declaration { Title = "implements", Type = DeclarationType.Keyword });
+                                }
                             }
-                            else if (definitionState != DefinitionState.Enum)
+                            else if (_domain != null)
                             {
-                                if ((definitionState & DefinitionState.WithExtends) != DefinitionState.WithExtends)
-                                    declarations.Add(new Declaration { Title = "extends", Type = DeclarationType.Keyword });
-                                if ((definitionState & DefinitionState.WithImplements) != DefinitionState.WithImplements)
-                                    declarations.Add(new Declaration { Title = "implements", Type = DeclarationType.Keyword });
+                                if (token.Value == "implements")
+                                    BuildInterfaceDeclarations(declarations);
+                                else
+                                    BuildTypeDeclarations(declarations, true);
                             }
                         }
-                        else
+                        else if (_domain != null)
                         {
-                            if (token.Value == "implements")
-                                BuildInterfaceDeclarations(declarations);
+                            // def xxxx {
+                            //   Name : xxx -><-
+                            if (token.Kind == TokenKind.Normal)
+                            {
+                                var prv = tokens.GetPreviousToken(token);
+                                if (prv.Value == ":")
+                                {
+                                    declarations.Add(new Declaration { Title = "=", Type = DeclarationType.Keyword });
+                                    declarations.Add(new Declaration { Title = "check", Type = DeclarationType.Keyword });
+                                    declarations.Add(new Declaration { Title = "validate", Type = DeclarationType.Keyword });
+                                }
+                            }
                             else
-                                BuildTypeDeclarations(declarations, true);
-                        }
-                    }
-                    else if (_domain != null)
-                    {
-                        // def xxxx {
-                        //   Name : xxx -><-
-                        if (token.Kind == TokenKind.Normal)
-                        {
-                            declarations.Add(new Declaration { Title = "=", Type = DeclarationType.Keyword });
-                            declarations.Add(new Declaration { Title = "check", Type = DeclarationType.Keyword });
-                            declarations.Add(new Declaration { Title = "validate", Type = DeclarationType.Keyword });
-                        }
-                        else
-                        {
-                            switch (token.Value)
                             {
-                                case ":":
-                                    var prv = tokens.GetPreviousToken(token);
-                                    if (prv == null || prv.Kind == TokenKind.String)
+                                switch (token.Value)
+                                {
+                                    case ":":
+                                        var prv = tokens.GetPreviousToken(token);
+                                        if (prv == null || prv.Kind == TokenKind.String)
+                                            break;
+                                        goto case "=>";
+                                    case "=>":
+                                    case "<-":
+                                    case "->":
+                                    case "<=":
+                                        BuildTypeDeclarations(declarations, false);
                                         break;
-                                    goto case "=>";
-                                case "=>":
-                                case "<-":
-                                case "->":
-                                case "<=":
-                                    BuildTypeDeclarations(declarations, false);
-                                    break;
+                                }
                             }
                         }
                     }
@@ -227,8 +261,11 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
         {
             foreach (var elem in (domain ?? _domain).Elements)
             {
-                if (elem is IEntitySymbol || elem is IRelationshipSymbol || elem is IExternSymbol)
+                if (elem is IEntitySymbol || elem is IRelationshipSymbol || elem is IExternSymbol || elem is IValueObjectSymbol)
                 {
+                    if (forExtends && elem is IValueObjectSymbol)
+                        continue;
+
                     if (forExtends && elem is IExternSymbol)
                     {
                         var ext = elem as IExternSymbol;
@@ -242,9 +279,12 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             if (alias != null)
                 return;
 
-            foreach (var elem in _compilation.GetPrimitives())
+            if (!forExtends)
             {
-                declarations.Add(new Declaration { Title = elem.Name, Type = DeclarationType.Primitive });
+                foreach (var elem in _compilation.GetPrimitives())
+                {
+                    declarations.Add(new Declaration { Title = elem.Name, Type = DeclarationType.Primitive });
+                }
             }
 
             foreach (var uses in (domain ?? _domain).Usings)

@@ -31,5 +31,10 @@ namespace Hyperstore.CodeAnalysis.Symbols
         {
             get { return this.Attributes; }
         }
+
+        public bool HasAttribute(string name)
+        {
+            return Attributes.Any(a => String.Compare(name, a.Name, StringComparison.OrdinalIgnoreCase) == 0);
+        }
     }
 }

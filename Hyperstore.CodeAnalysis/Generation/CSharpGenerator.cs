@@ -29,20 +29,6 @@ namespace Hyperstore.CodeAnalysis.Generation
             return null;
         }
 
-        //public void GenerateCode(VirtualRelationshipSymbol rel)
-        //{
-        //    using (ctx.Push(GenerationScope.MetadataDefinitionBegin))
-        //    {
-        //        ctx.WriteLine(3, "{0} = new SchemaRelationship(\"{0}\", {1}, {2}, Cardinality.{3}, {4});", rel.Name, rel.Definition.Source.Name, rel.Definition.End.AsDefinitionVariable(), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false");
-        //    }
-
-        //    using (ctx.Push(GenerationScope.Begin))
-        //    {
-        //        ctx.WriteLine(2, "public static ISchemaRelationship {0} {{get;protected set;}}", rel.Name);
-        //    }
-
-        //}
-
         public void StartGenerate(HyperstoreGeneratorContext ctx)
         {
             this.ctx = ctx;
@@ -76,7 +62,9 @@ namespace Hyperstore.CodeAnalysis.Generation
                 return;
 
             Domain = domain;
-            if (domain.Elements.Count() > 0)
+            var elements = domain.Elements.Where(e => !e.HasAttribute("IgnoreGeneration"));
+
+            if (elements.Count() > 0)
             {
                 using (ctx.Push(GenerationScope.MetadataOnBeforeLoad))
                 {
@@ -84,17 +72,17 @@ namespace Hyperstore.CodeAnalysis.Generation
                     ctx.WriteLine(2, "{{");
                     ctx.WriteLine(3, "base.OnSchemaLoaded(schema);");
 
-                    foreach (var clazz in domain.Elements)
+                    foreach (var clazz in elements)
                     {
                         foreach (var constraint in clazz.Constraints)
                         {
                             if (constraint.Kind == ConstraintKind.Check)
                             {
-                                ctx.WriteLine(3, "{0}.AddImplicitConstraint<{3}>(self => {1}, \"{2}\");", clazz.AsDefinitionVariable(), constraint.Condition, constraint.Message, clazz.Name);
+                                ctx.WriteLine(3, "{0}.AddImplicitConstraint<{3}>( {1}, \"{2}\"){4}.Create();", clazz.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, clazz.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                             }
                             else if (constraint.Kind == ConstraintKind.Validate)
                             {
-                                ctx.WriteLine(3, "{0}.AddConstraint<{3}>(self => {1}, \"{2}\");", clazz.AsDefinitionVariable(), constraint.Condition, constraint.Message, clazz.Name);
+                                ctx.WriteLine(3, "{0}.AddConstraint<{3}>( {1}, \"{2}\"){4}.Create();", clazz.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, clazz.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                             }
                         }
                     }
@@ -151,24 +139,29 @@ namespace Hyperstore.CodeAnalysis.Generation
             {
                 ctx.WriteLine();
 
+                foreach (var child in domain.ValueObjects)
+                {
+                    GenerateCode(child);
+                }
+
                 // D'abord les classes
-                foreach (var n in domain.Elements.OfType<EntitySymbol>().Where(c => !c.HasClassInheritance))
+                foreach (var n in elements.OfType<EntitySymbol>().Where(c => !c.HasGeneratedClassInheritance))
                 {
                     GenerateClassCode(n);
                 }
 
                 // Puis les relations
-                foreach (var n in domain.Elements.OfType<RelationshipSymbol>().Where(c => !c.HasClassInheritance))
+                foreach (var n in elements.OfType<RelationshipSymbol>().Where(c => !c.HasGeneratedClassInheritance))
                 {
                     GenerateClassCode(n);
                 }
 
-                foreach (var n in domain.Enums)
+                foreach (var n in elements.OfType<IEnumSymbol>())
                 {
                     GenerateCode(n);
                 }
 
-                foreach (var c in domain.Commands)
+                foreach (var c in Domain.Commands.Where(e => !e.HasAttribute("IgnoreGeneration")))
                 {
                     GenerateCode(c);
                 }
@@ -180,7 +173,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                 }
             }
 
-            if (domain.Elements.Count() > 0)
+            if (elements.Count() > 0)
             {
                 using (ctx.Push(GenerationScope.MetadataDefinitionEnd))
                 {
@@ -194,6 +187,122 @@ namespace Hyperstore.CodeAnalysis.Generation
                 ctx.WriteLine(2, "}}");
                 ctx.WriteLine(1, "}}");
             }
+        }
+
+        private void GenerateCode(IValueObjectSymbol valueObject)
+        {
+            using (ctx.Push(GenerationScope.MetadataDefinitionBegin))
+            {
+                using (ctx.Push(GenerationScope.Begin))
+                {
+                    ctx.WriteLine(2, "public static {0}Schema {0}Schema {{ get; protected set; }}", valueObject.Name);
+                }
+
+                ctx.WriteLine(3, "{0}Schema = new {0}Schema(schema);", valueObject.Name);
+            }
+
+            using (ctx.Push(GenerationScope.NewScope))
+            {
+                var type = valueObject.Type as IExternSymbol;
+
+                var hasValidationConstraints = valueObject.Constraints.Any(c => c.Kind == ConstraintKind.Validate);
+                var constraintType = hasValidationConstraints ? "IValidationValueObjectConstraint" : "ICheckValueObjectConstraint";
+                ctx.WriteLine(1, "public sealed partial class {0}Schema : Hyperstore.Modeling.Metadata.SchemaValueObject<{1}>, global::Hyperstore.Modeling.Metadata.Constraints.{2}<{1}>", valueObject.Name, type.FullName, constraintType);
+                ctx.WriteLine(1, "{{");
+
+                ctx.WriteLine(2, "protected {0}Schema()", valueObject.Name);
+                ctx.WriteLine(2, "{{}}");
+                ctx.WriteLine();
+
+
+                ctx.WriteLine(2, "public {0}Schema(ISchema schema)", valueObject.Name);
+                ctx.WriteLine(3, ": base(schema)");
+                ctx.WriteLine(2, "{{}}");
+                ctx.WriteLine();
+
+                ctx.WriteLine(2, "protected override object Deserialize(SerializationContext ctx)");
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "return Hyperstore.Modeling.Metadata.Primitives.{0}Primitive.DeserializeValue(ctx);", TypeToPrimitive(type));
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine();
+
+                ctx.WriteLine(2, "protected override string Serialize(object data, IJsonSerializer serializer)");
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "return Hyperstore.Modeling.Metadata.Primitives.{0}Primitive.SerializeValue(data);", TypeToPrimitive(type));
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine();
+
+                ctx.WriteLine(2, "public void ExecuteConstraint(string value, global::Hyperstore.Modeling.Metadata.Constraints.ConstraintContext ctx)");
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "Func<{0}, bool> condition;", type.FullName);
+
+                foreach (var constraint in valueObject.Constraints.Where(c => c.Kind == ConstraintKind.Check))
+                {
+                    WriteConstraint(constraint);
+                }
+
+                if (hasValidationConstraints)
+                {
+                    ctx.WriteLine(3, "if( ctx.ConstraintKind == global::Hyperstore.Modeling.Metadata.Constraints.ConstraintKind.Validate )");
+                    ctx.WriteLine(3, "{{");
+                    foreach (var constraint in valueObject.Constraints.Where(c => c.Kind == ConstraintKind.Validate))
+                    {
+                        WriteConstraint(constraint);
+                    }
+                    ctx.WriteLine(3, "}}");
+                    ctx.WriteLine(2, "}}");
+
+                    ctx.WriteLine();
+
+                    ctx.WriteLine(2, "public string Category");
+                    ctx.WriteLine(2, "{{");
+                    ctx.WriteLine(3, "get {{ return null; }}");
+                }
+
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine(1, "}}");
+            }
+        }
+
+        private string TypeToPrimitive(IExternSymbol type)
+        {
+            switch (type.Alias)
+            {
+                case "string":
+                    return "String";
+                case "int":
+                    return "Int32";
+                case "bool":
+                    return "Boolean";
+                case "char":
+                    return "Char";
+                case "decimal":
+                    return "Decimal";
+                case "double":
+                    return "Double";
+                case "float":
+                    return "Single";
+                case "Guid":
+                case "Int16":
+                case "Int32":
+                case "Int64":
+                case "UInt16":
+                case "UInt32":
+                case "UInt64":
+                case "DateTime":
+                case "TimeSpan":
+                    break;
+            }
+            return type.Alias;
+        }
+
+        private void WriteConstraint(IConstraintSymbol constraint)
+        {
+            ctx.WriteLine(4, "condition = {0};", constraint.Condition.Script);
+            ctx.WriteLine(4, "if( condition(value) == false )");
+            ctx.WriteLine(4, "{{");
+            ctx.WriteLine(5, "ctx.Create{0}Message(\"{1}\");", constraint.AsError ? "Error" : "Warning", constraint.Message);
+            ctx.WriteLine(4, "}}");
         }
 
         private void GenerateClassCode(IElementSymbol n)
@@ -232,7 +341,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                     {
                         ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(), prop.PropertyType.Name, ext.Alias, defaultValue);
                     }
-                    else
+                    else if (prop.PropertyType is IValueObjectSymbol)
+                    {
+                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(), prop.PropertyType.Name, prop.PropertyType.Name, defaultValue);
+                    }
+                    else 
                     {
                         ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty<{1}>(\"{2}\"{3});", clazz.AsDefinitionVariable(), prop.PropertyType.AsFullName(), prop.Name, defaultValue);
                     }
@@ -379,200 +492,182 @@ namespace Hyperstore.CodeAnalysis.Generation
 
         private void GenerateCode(ICommandSymbol command)
         {
-            //using (ctx.Push(GenerationScope.NewScope))
-            //{
-            //    ctx.WriteLine(0, "namespace Commands {{");
+            using (ctx.Push(GenerationScope.NewScope))
+            {
+                ctx.WriteLine(0, "namespace Commands {{");
 
-            //    ctx.WriteLine(1, "public abstract class {0}CommandBase : AbstractDomainCommand, ICommandHandler<{0}Command>", command.Name);
-            //    ctx.WriteLine(1, "{{");
+                ctx.WriteLine(1, "public abstract partial class {0}CommandBase : AbstractDomainCommand, ICommandHandler<{0}Command>", command.Name);
+                ctx.WriteLine(1, "{{");
 
-            //    // Nom du 1er paramètre qui est une entité
-            //    string entityArg = null;
-            //    if (command.Attributes != null)
-            //    {
-            //        foreach (var att in command.Properties)
-            //        {
-            //            foreach (var attr in att.Attributes.Where(a => a.Name == "attribute"))
-            //            {
-            //                ctx.WriteLine(2, "[{0}]", attr.Arguments.First().Replace(@"\""", "\""));
-            //            }
+                // Nom du 1er paramètre qui est une entité
+                string entityArg = null;
+                if (command.Properties != null)
+                {
+                    foreach (var prop in command.Properties)
+                    {
+                        GeneratePropertyAttributes(prop);
 
-            //            string typeName = null;
-            //            var ex = Domain.FindExternalType(att.Type);
-            //            if (ex != null)
-            //            {
-            //                typeName = ex.FullName;
-            //            }
-            //            else
-            //            {
-            //                var cz = Domain.FindClass(att.Type);
-            //                typeName = cz.Name;
-            //                if (entityArg == null)
-            //                    entityArg = att.Type;
-            //            }
+                        var mod = prop.Attributes.FirstOrDefault(a => a.Name == "modifier");
+                        ctx.WriteLine(2, "{2} {0} {1} {{ get; protected set;}}", prop.PropertyType.AsFullName(), prop.Name, mod == null ? "public" : mod.Arguments.First());
+                        if (prop.IsEntity && entityArg == null)
+                            entityArg = prop.Name;
+                    }
+                    ctx.WriteLine();
+                }
 
-            //            var mod = att.GenerationAttributes.FirstOrDefault(a => a.Name == "modifier");
-            //            ctx.WriteLine(2, "{2} {0} {1} {{ get; protected set;}}", typeName, att.Name, mod == null ? "public" : mod.Arguments[0]);
-            //        }
-            //        ctx.WriteLine();
-            //    }
+                ctx.WriteLine(2, "protected {0}CommandBase(IDomainModel domain)", command.Name);
+                ctx.WriteLine(3, ": base(domain)");
+                ctx.WriteLine(2, "{{}}");
+                ctx.WriteLine();
 
-            //    ctx.WriteLine(2, "protected {0}CommandBase(IDomainModel domain)", command.Name);
-            //    ctx.WriteLine(3, ": base(domain)");
-            //    ctx.WriteLine(2, "{{}}");
-            //    ctx.WriteLine();
+                // Handler
+                ctx.WriteLine(2, "IEvent ICommandHandler<{0}Command>.Handle(ExecutionCommandContext<{0}Command> context)", command.Name);
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "return HandleCommand(context);");
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine();
 
-            //    // Handler
-            //    ctx.WriteLine(2, "IEvent ICommandHandler<{0}Command>.Handle(ExecutionCommandContext<{0}Command> context)", command.Name);
-            //    ctx.WriteLine(2, "{{");
-            //    ctx.WriteLine(3, "return HandleCommand(context);");
-            //    ctx.WriteLine(2, "}}");
-            //    ctx.WriteLine();
+                ctx.WriteLine(2, "protected virtual IEvent HandleCommand(ExecutionCommandContext<{0}Command> context)", command.Name);
+                ctx.WriteLine(2, "{{");
 
-            //    ctx.WriteLine(2, "protected virtual IEvent HandleCommand(ExecutionCommandContext<{0}Command> context)", command.Name);
-            //    ctx.WriteLine(2, "{{");
+                ctx.Write(3, "return new global::{0}.Events.{1}Event(DomainModel, ", Domain.Namespace, command.Name);
+                foreach (var att in command.Properties)
+                {
+                    if (att.IsEntity)
+                    {
+                        ctx.Write("((IModelElement){0}).Id, ((IModelElement){0}).SchemaInfo.Id, ", att.Name);
+                    }
+                    else
+                    {
+                        ctx.Write("{0}, ", att.Name);
+                    }
+                }
+                ctx.WriteLine(0, "context.CurrentSession.SessionId);");
 
-            //    ctx.Write(3, "return new global::{0}.Events.{1}Event(DomainModel, ", Domain.Namespace, command.Name);
-            //    foreach (var att in command.Attributes)
-            //    {
-            //        if (att.IsEntity)
-            //        {
-            //            ctx.Write("((IModelElement){0}).Id, ((IModelElement){0}).SchemaInfo.Id, ", att.Name);
-            //        }
-            //        else
-            //        {
-            //            ctx.Write("{0}, ", att.Name);
-            //        }
-            //    }
-            //    ctx.WriteLine(0, "context.CurrentSession.SessionId);");
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine(1, "}}");
 
-            //    ctx.WriteLine(2, "}}");
-            //    ctx.WriteLine(1, "}}");
+                ctx.WriteLine();
 
-            //    ctx.WriteLine();
+                ctx.WriteLine(1, "public partial class {0}Command : {0}CommandBase", command.Name);
+                ctx.WriteLine(1, "{{");
 
-            //    ctx.WriteLine(1, "public partial class {0}Command : {0}CommandBase", command.Name);
-            //    ctx.WriteLine(1, "{{");
+                // Génération du ctor
+                ctx.Write(2, "public {0}Command(", command.Name);
 
-            //    // Génération du ctor
-            //    ctx.Write(2, "public {0}Command(", command.Name);
+                bool first = true;
+                if (entityArg == null)
+                {
+                    ctx.Write("IDomainModel domain");
+                    first = false;
+                }
 
-            //    bool first = true;
-            //    if (entityArg == null)
-            //    {
-            //        ctx.Write("IDomainModel domain");
-            //        first = false;
-            //    }
+                foreach (var att in command.Properties)
+                {
+                    if (!first)
+                    {
+                        ctx.Write(", ");
+                    }
+                    first = false;
+                    if (!att.IsEntity)
+                    {
+                        ctx.Write("{0} {1}", att.PropertyType.AsFullName(), att.Name);
+                    }
+                    else
+                    {
+                        ctx.Write("{0} {0}", att.Name);
+                    }
+                }
+                ctx.Write(")");
+                ctx.WriteLine();
+                if (entityArg == null)
+                {
+                    ctx.Write(3, ": base(domain)");
+                }
+                else
+                {
+                    ctx.Write(3, ": base(((IModelElement){0}).DomainModel)", entityArg);
+                }
 
-            //    foreach (var att in command.Attributes)
-            //    {
-            //        if (!first)
-            //        {
-            //            ctx.Write(", ");
-            //        }
-            //        first = false;
-            //        if (!att.IsEntity)
-            //        {
-            //            var ex = Domain.FindExternalType(att.Type);
-            //            ctx.Write("{0} {1}", ex.FullName, att.Name);
-            //        }
-            //        else
-            //        {
-            //            ctx.Write("{0} {0}", att.Name);
-            //        }
-            //    }
-            //    ctx.Write(")");
-            //    ctx.WriteLine();
-            //    if (entityArg == null)
-            //    {
-            //        ctx.Write(3, ": base(domain)");
-            //    }
-            //    else
-            //    {
-            //        ctx.Write(3, ": base(((IModelElement){0}).DomainModel)", entityArg);
-            //    }
+                ctx.WriteLine();
 
-            //    ctx.WriteLine();
+                ctx.WriteLine(2, "{{");
+                foreach (var att in command.Properties)
+                {
+                    if (att.IsEntity)
+                    {
+                        ctx.WriteLine(3, "if( {0} == null)", att.Name);
+                        ctx.WriteLine(4, "throw new ArgumentNullException(\"{0}\");", att.Name);
+                    }
+                    ctx.WriteLine(3, "this.{0} = {0};", att.Name);
+                }
+                ctx.WriteLine(2, "}}");
+            }
 
-            //    ctx.WriteLine(2, "{{");
-            //    foreach (var att in command.Attributes)
-            //    {
-            //        if (att.IsEntity)
-            //        {
-            //            ctx.WriteLine(3, "if( {0} == null)", att.Name);
-            //            ctx.WriteLine(4, "throw new ArgumentNullException(\"{0}\");", att.Name);
-            //        }
-            //        ctx.WriteLine(3, "this.{0} = {0};", att.Name);
-            //    }
-            //    ctx.WriteLine(2, "}}");
-            //}
+            ctx.WriteLine(1, "}}");
 
-            //ctx.WriteLine(1, "}}");
+            ctx.WriteLine();
 
-            //ctx.WriteLine();
+            ctx.WriteLine(0, "}}");
 
-            //ctx.WriteLine(0, "}}");
-
-            //ctx.WriteLine(0, "namespace Events {{");
+            ctx.WriteLine(0, "namespace Events {{");
 
 
-            //ctx.WriteLine(1, "public partial class {0}Event : AbstractDomainEvent", command.Name);
-            //ctx.WriteLine(1, "{{");
+            ctx.WriteLine(1, "public partial class {0}Event : AbstractDomainEvent", command.Name);
+            ctx.WriteLine(1, "{{");
 
-            //if (command.Attributes != null)
-            //{
-            //    foreach (var att in command.Attributes)
-            //    {
-            //        if (!att.IsEntity)
-            //        {
-            //            var ex = Domain.FindExternalType(att.Type);
-            //            ctx.WriteLine(2, "public {0} {1} {{get; set;}}", ex.FullName, att.Name);
-            //        }
-            //        else
-            //        {
-            //            ctx.WriteLine(2, "public Identity {0}Id {{get; set;}}", att.Name);
-            //            ctx.WriteLine(2, "public Identity {0}SchemaId {{get; set;}}", att.Name);
-            //        }
-            //    }
-            //    ctx.WriteLine();
-            //}
+            if (command.Attributes != null)
+            {
+                foreach (var att in command.Properties)
+                {
+                    if (!att.IsEntity)
+                    {
+                        ctx.WriteLine(2, "public {0} {1} {{get; set;}}", att.PropertyType.AsFullName(), att.Name);
+                    }
+                    else
+                    {
+                        ctx.WriteLine(2, "public Identity {0}Id {{get; set;}}", att.Name);
+                        ctx.WriteLine(2, "public Identity {0}SchemaId {{get; set;}}", att.Name);
+                    }
+                }
+                ctx.WriteLine();
+            }
 
-            //ctx.Write(2, "public {0}Event(IDomainModel domain, ", command.Name);
-            //foreach (var att in command.Attributes)
-            //{
-            //    if (att.IsEntity)
-            //    {
-            //        ctx.Write("Identity {0}Id, Identity {0}schemaId, ", att.Name);
-            //    }
-            //    else
-            //    {
-            //        var ex = Domain.FindExternalType(att.Type);
-            //        ctx.Write("{0} {1}, ", ex.FullName, att.Name);
-            //    }
-            //}
+            ctx.Write(2, "public {0}Event(IDomainModel domain, ", command.Name);
+            foreach (var att in command.Properties)
+            {
+                if (att.IsEntity)
+                {
+                    ctx.Write("Identity {0}Id, Identity {0}schemaId, ", att.Name);
+                }
+                else
+                {
+                    ctx.Write("{0} {1}, ", att.PropertyType.AsFullName(), att.Name);
+                }
+            }
 
-            //ctx.WriteLine(0, "Guid correlationId, long? version=null)");
-            //ctx.WriteLine(3, ": base(domain.Name, domain.ExtensionName, version ?? DateTime.UtcNow.Ticks, correlationId)");
+            ctx.WriteLine(0, "Guid correlationId, long? version=null)");
+            ctx.WriteLine(3, ": base(domain.Name, domain.ExtensionName, version ?? DateTime.UtcNow.Ticks, correlationId)");
 
-            //ctx.WriteLine(2, "{{");
-            //foreach (var att in command.Attributes)
-            //{
-            //    if (att.IsEntity)
-            //    {
-            //        ctx.WriteLine(3, "this.{0}Id = {0}Id;", att.Name);
-            //        ctx.WriteLine(3, "this.{0}SchemaId = {0}SchemaId;", att.Name);
-            //    }
-            //    else
-            //    {
-            //        ctx.WriteLine(3, "this.{0} = {0};", att.Name);
-            //    }
-            //}
-            //ctx.WriteLine(2, "}}");
+            ctx.WriteLine(2, "{{");
+            foreach (var att in command.Properties)
+            {
+                if (att.IsEntity)
+                {
+                    ctx.WriteLine(3, "this.{0}Id = {0}Id;", att.Name);
+                    ctx.WriteLine(3, "this.{0}SchemaId = {0}SchemaId;", att.Name);
+                }
+                else
+                {
+                    ctx.WriteLine(3, "this.{0} = {0};", att.Name);
+                }
+            }
+            ctx.WriteLine(2, "}}");
 
-            //ctx.WriteLine(1, "}}");
-            //ctx.WriteLine(0, "}}");
+            ctx.WriteLine(1, "}}");
+            ctx.WriteLine(0, "}}");
 
-            //ctx.WriteLine();
+            ctx.WriteLine();
 
         }
 
@@ -821,11 +916,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                     {
                         if (constraint.Kind == ConstraintKind.Check)
                         {
-                            ctx.WriteLine(3, "{0}.AddImplicitConstraint<{4}>({1}, \"{2}\", \"{3}\");", parent.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name);
+                            ctx.WriteLine(3, "{0}.AddImplicitConstraint<{4}>({1}, \"{2}\", \"{3}\"){5}.Create();", parent.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                         }
                         else if (constraint.Kind == ConstraintKind.Validate)
                         {
-                            ctx.WriteLine(3, "{0}.AddConstraint<{4}>({1}, \"{2}\", \"{3}\");", parent.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name);
+                            ctx.WriteLine(3, "{0}.AddConstraint<{4}>({1}, \"{2}\", \"{3}\"){5}.Create();", parent.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                         }
                     }
                 }

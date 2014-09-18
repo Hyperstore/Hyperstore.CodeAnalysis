@@ -95,11 +95,24 @@ namespace Hyperstore.CodeAnalysis
 
         private void ParseVerbatimString()
         {
-            Char ch;
-            while ((ch = PeekChar()) != '"' && ch != Eof)
+            AdvanceChar();
+            for (; ; )
             {
+                var ch = PeekChar();
+                if (ch == Eof)
+                    break;
+                
+                if (ch == '"')
+                {
+                    AdvanceChar();
+                    if (PeekChar() != '"')
+                    {
+                        break;
+                    }
+                    AdvanceChar();
+                }
                 AdvanceChar();
-            }
+            }           
         }
 
         private void ParseMultilineComment()
@@ -138,8 +151,15 @@ namespace Hyperstore.CodeAnalysis
                 {
                     AdvanceChar();
                 }
-                else if (ch == Eof || ch == quotedCharacter || IsNewLine(ch))
+                else if (ch == Eof || IsNewLine(ch))
+                {
                     break;
+                }
+                else if (ch == quotedCharacter)
+                {
+                    AdvanceChar();
+                    break;
+                } 
 
                 AdvanceChar();
             }

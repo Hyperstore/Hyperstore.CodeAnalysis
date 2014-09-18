@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Hyperstore.CodeAnalysis.Symbols;
 using Hyperstore.CodeAnalysis.Syntax;
+using Irony.Parsing;
 
 namespace Hyperstore.CodeAnalysis.Compilation
 {
@@ -30,6 +31,21 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 model.Build(SyntaxTree);
                 Model = model;
             }
+        }
+
+        public void Visit(HyperstoreSymbolVisitor visitor)
+        {
+            if (Domain == null)
+                return;
+            var walker = new HyperstoreSymbolWalker(visitor);
+            walker.Visit(Domain);
+        }
+
+        public ISymbol GetSymbol(HyperstoreSpan span)
+        {
+            var visitor = new SymbolBeforePositionFinder(span);
+            Visit(visitor);
+            return visitor.Symbol;
         }
     }
 
@@ -70,11 +86,15 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         internal void AddSyntaxTree(HyperstoreSyntaxTree syntaxTree)
         {
+            var filePath = syntaxTree.SourceFilePath ?? syntaxTree.GetHashCode().ToString();
             _models[syntaxTree.SourceFilePath] = new SemanticModel(_compilation, syntaxTree);
         }
 
         internal void RenameSyntaxTree(string oldFilePath, string newFilePath)
         {
+            if (oldFilePath == null || newFilePath == null)
+                throw new ArgumentNullException("filepath");
+
             var model = _models[oldFilePath];
             if (model != null)
             {
@@ -150,9 +170,15 @@ namespace Hyperstore.CodeAnalysis.Compilation
             return entry;
         }
 
+        public IEnumerable<SemanticModel> SemanticModels
+        {
+            get { return _models.Values; }
+        }
+
         protected string NormalizeUri(IDomainSymbol domain, string uri)
         {
-            return System.IO.Path.Combine(System.IO.Path.GetDirectoryName(domain.SyntaxTokenOrNode.SyntaxTree.SourceFilePath), uri);
+            var filePath = domain.SyntaxTokenOrNode.SyntaxTree.SourceFilePath;
+            return filePath != null ? System.IO.Path.Combine(System.IO.Path.GetDirectoryName(filePath), uri) : uri;
         }
 
         public IModelBuilder FindDomain(IDomainSymbol domain, string uri)

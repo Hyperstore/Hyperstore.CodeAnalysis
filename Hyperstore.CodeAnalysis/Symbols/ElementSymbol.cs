@@ -63,7 +63,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
             _implements.AddRange(implements.Select(i => new LazyRef<TypeSymbol>(i, compilation, Domain)));
         }
 
-        public bool HasClassInheritance { get; internal set; }
+        public bool HasGeneratedClassInheritance { get; internal set; }
 
         internal override void AddDerived(ElementSymbol elem)
         {

@@ -20,9 +20,10 @@ namespace Hyperstore.CodeAnalysis.Symbols
             _visitor = visitor;
         }
 
-        public void Visit(DomainSymbol symbol)
+        public void Visit(IDomainSymbol symbol)
         {
-            ((IVisitableSymbol)symbol).Accept(_visitor);
+            if( symbol is IVisitableSymbol)
+                ((IVisitableSymbol)symbol).Accept(_visitor);
         }
     }
 }

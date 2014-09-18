@@ -76,7 +76,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             }
         }
 
-        public override void VisitCSharpCode(CSharpCodeSymbol code)
+        public void VisitCSharpCode(CSharpCodeSymbol code)
         {
             base.VisitCSharpCode(code);
 
@@ -108,7 +108,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             //);
         }
 
-        public override void VisitUsingSymbol(UsingSymbol uses)
+        public void VisitUsingSymbol(UsingSymbol uses)
         {
             var domain = uses.Domain;
 
@@ -120,11 +120,11 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         }
 
-        public override void VisitAttributeSymbol(AttributeSymbol attr)
+        public void VisitAttributeSymbol(AttributeSymbol attr)
         {
             var name = attr.Name.ToLower();
 
-            if (name == "observable" || name == "dynamic")
+            if (name == "observable" || name == "dynamic" || name == "ignoregeneration")
             {
                 if (attr.Arguments.Count() != 0)
                     AddDiagnostic(attr, "Attribute must have no argument");
@@ -154,32 +154,58 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 AddDiagnostic(attr, "Invalid attribute name {0} for {1}", attr.Name, attr.Parent.Name);
         }
 
-        //public TypeSymbol FindTypeSymbol(string qn)
-        //{
-        //    if (qn == null)
-        //        return null;
+        #region override
+        public override void VisitRelationshipSymbol(IRelationshipSymbol symbol)
+        {
+            VisitRelationshipSymbol(symbol as RelationshipSymbol);
+        }
 
-        //    TypeSymbol symbol = null;
-        //    var pos = qn.LastIndexOf('.');
-        //    if (pos < 0)
-        //    {
-        //        if (Domain.Members.TryGetValue(qn, out symbol))
-        //            return symbol;
-        //        return Compilation.Resolver.FindPrimitive(qn);
-        //    }
+        public override void VisitPropertyReferenceSymbol(IPropertyReferenceSymbol symbol)
+        {
+            VisitPropertyReferenceSymbol(symbol as PropertyReferenceSymbol);
+        }
 
-        //    if (Compilation.Options == HyperstoreCompilationOptions.Compilation)
-        //    {
-        //        foreach (var uses in Domain.Usings)
-        //        {
-        //            if (qn.StartsWith(uses.Name, StringComparison.Ordinal))
-        //            {
-        //                uses.Domain.Members.TryGetValue(qn.Substring(uses.Name.Length + 1), out symbol);
-        //                return symbol;
-        //            }
-        //        }
-        //    }
-        //    return null;
-        //}
+        public override void VisitPropertySymbol(IPropertySymbol symbol)
+        {
+            VisitPropertySymbol(symbol as PropertySymbol);
+        }
+
+        public override void VisitOppositeReferenceSymbol(IOppositeReferenceSymbol symbol)
+        {
+            VisitOppositeReferenceSymbol(symbol as OppositeReferenceSymbol);
+        }
+
+
+        public override void VisitEntitySymbol(IEntitySymbol symbol)
+        {
+            VisitEntitySymbol(symbol as EntitySymbol);
+        }
+
+        public override void VisitAttributeSymbol(IAttributeSymbol symbol)
+        {
+            VisitAttributeSymbol(symbol as AttributeSymbol);
+        }
+
+        public override void VisitCSharpCode(ICSharpCodeSymbol symbol)
+        {
+            VisitCSharpCode(symbol as CSharpCodeSymbol);
+        }
+
+
+        public override void VisitUsingSymbol(IUsingSymbol symbol)
+        {
+            VisitUsingSymbol(symbol as UsingSymbol);
+        }
+
+        public override void VisitCommandPropertySymbol(ICommandPropertySymbol symbol)
+        {
+            VisitCommandPropertySymbol(symbol as CommandPropertySymbol);
+        }
+
+        public override void VisitValueObjectSymbol(IValueObjectSymbol symbol)
+        {
+            VisitValueObjectSymbol(symbol as ValueObjectSymbol);
+        }
+        #endregion
     }
 }

@@ -20,6 +20,8 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
         private uint _docCookie;
         private string _filePath;
 
+        public string SourceFilePath { get { return _filePath; } }
+
         protected RDTEvents(ITextBuffer buffer)
         {
             ErrorsWindow = new ErrorListWindow(new ServiceProvider(GlobalServiceProvider), "Hyperstore");

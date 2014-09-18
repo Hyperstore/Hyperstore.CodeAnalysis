@@ -8,5 +8,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
 {
     public interface ICommandSymbol : ITypeSymbol
     {
+        IEnumerable<ICommandPropertySymbol> Properties { get; }
     }
 }

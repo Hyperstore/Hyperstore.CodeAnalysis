@@ -50,10 +50,13 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
             BuildUsesStatement(syntaxTree, domainNode.Uses);
             BuildExternals(domainNode.Externals);
+            BuildValueObjects(domainNode.Elements.OfType<Syntax.ValueObjectDeclarationSyntax>());
             BuildEnums(domainNode.Elements.OfType<Syntax.EnumDeclarationSyntax>());
             BuildEntities(domainNode.Elements.OfType<Syntax.EntityDeclarationSyntax>());
             BuildRelationships(domainNode.Elements.OfType<Syntax.RelationshipDeclarationSyntax>());
+            BuildCommands(domainNode.Elements.OfType<Syntax.CommandDeclarationSyntax>());
         }
+
 
         private void BuildAttributes(Symbol parent, List<AttributeSymbol> attributes, Syntax.ListSyntax<Syntax.AttributeSyntax> nodes)
         {
@@ -82,7 +85,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     symbol.Kind = kind;
                     if (kind == ConstraintKind.Compute && c.ErrorLevel != null)
                         Compilation.AddDiagnostic(c.ErrorLevel, "Syntax error. Expected C# code block.");
-                    symbol.AsError = c.ErrorLevel.Text == "error";
+                    if (kind != ConstraintKind.Compute)
+                        symbol.AsError = c.ErrorLevel.Text == "error";
                     return symbol;
                 }));
         }
@@ -96,9 +100,9 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
                 var symbol = new RelationshipSymbol(node, Domain, nameToken);
 
-                symbol.Definition = new RelationshipDefinitionSymbol(node, symbol, this.Compilation, 
-                                        def.Name, def.SourceMultiplicity != null && def.SourceMultiplicity.Text == "*", 
-                                        def.TargetType, def.TargetMultiplicity != null && def.TargetMultiplicity.Text == "*", 
+                symbol.Definition = new RelationshipDefinitionSymbol(node, symbol, this.Compilation,
+                                        def.Name, def.SourceMultiplicity != null && def.SourceMultiplicity.Text == "*",
+                                        def.TargetType, def.TargetMultiplicity != null && def.TargetMultiplicity.Text == "*",
                                         def.Kind.Text == "=>");
                 return symbol;
             });
@@ -108,6 +112,80 @@ namespace Hyperstore.CodeAnalysis.Compilation
         {
             BuildElements<IEntitySymbol>(entities, (node, nameToken) => new EntitySymbol(node, Domain, nameToken));
         }
+
+        private void BuildCommands(IEnumerable<CommandDeclarationSyntax> commands)
+        {
+            foreach (var commandNode in commands)
+            {
+                var elementName = commandNode.Name.Text;
+
+                TypeSymbol tElement;
+                CommandSymbol command;
+                if (Domain.Members.TryGetValue(elementName, out tElement))
+                {
+                        Compilation.AddDiagnostic(commandNode.Name, "Duplicate element name {0}", elementName);
+                        continue;
+                }
+                else
+                {
+                    command = new CommandSymbol(commandNode, Domain, commandNode.Name);
+                    Domain.Members.Add(elementName, command);
+                }
+
+                BuildAttributes(command, command.Attributes, commandNode.Attributes);
+
+                  var set = new HashSet<string>();
+                  foreach (var member in commandNode.Properties)
+                  {
+                      var memberName = member.Name.Text;
+                      if (!set.Add(memberName) || command.Properties.Any(m => m.Name == memberName))
+                      {
+                          Compilation.AddDiagnostic(member.Name, "Duplicate member {0} in element {1}", memberName, elementName);
+                          continue;
+                      }
+
+                      var prop = member as Syntax.CommandMemberDeclarationSyntax;
+                      if (prop != null)
+                      {
+                          var p = new CommandPropertySymbol(this.Compilation, member, command, prop.PropertyType, prop.Name);
+                          BuildAttributes(p, p.Attributes, member.Attributes);
+                          command.Properties.Add(p);
+                      }
+                  }
+            }
+        }
+
+        private void BuildValueObjects(IEnumerable<ValueObjectDeclarationSyntax> elements)
+        {
+            foreach (var node in elements)
+            {
+                var elementName = node.Name.Text;
+                var isPartial = node.Partial != null;
+
+                TypeSymbol tElement;
+                ValueObjectSymbol element;
+                if (Domain.Members.TryGetValue(elementName, out tElement))
+                {
+                    element = tElement as ValueObjectSymbol;
+                    if (element == null || (!element.IsPartial && !isPartial))
+                    {
+                        Compilation.AddDiagnostic(node.Name, "Duplicate element name {0}", elementName);
+                        continue;
+                    }
+                }
+                else
+                {
+                    element = new ValueObjectSymbol(Compilation, node, Domain, node.Name, node.Type);
+                    Domain.Members.Add(elementName, element);
+                }
+
+                element.IsPartial |= isPartial;
+
+                BuildAttributes(element, element.Attributes, node.Attributes);
+                BuildConstraints(element, element.Constraints, node.Constraints);
+            }
+        }
+
 
         private void BuildElements<T>(IEnumerable<Syntax.ElementDeclarationSyntax> elements, Func<Syntax.ElementDeclarationSyntax, SyntaxToken, ElementSymbol> elementFactory) where T : IElementSymbol
         {
@@ -129,7 +207,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 }
                 else
                 {
-                    element = elementFactory(node,node.Name);
+                    element = elementFactory(node, node.Name);
                     Domain.Members.Add(elementName, element);
                 }
 
@@ -178,11 +256,11 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     {
                         var propertyReference = new PropertyReferenceSymbol(this.Compilation, member, element, reference.RelationshipName, reference.Definition.Name);
 
-                        propertyReference.Definition = new RelationshipDefinitionSymbol(member, propertyReference, this.Compilation, 
-                                                            node.Name, 
-                                                            reference.Definition.SourceMultiplicity != null && reference.Definition.SourceMultiplicity.Text == "*", 
-                                                            reference.Definition.TargetType, 
-                                                            reference.Definition.TargetMultiplicity != null && reference.Definition.TargetMultiplicity.Text == "*", 
+                        propertyReference.Definition = new RelationshipDefinitionSymbol(member, propertyReference, this.Compilation,
+                                                            node.Name,
+                                                            reference.Definition.SourceMultiplicity != null && reference.Definition.SourceMultiplicity.Text == "*",
+                                                            reference.Definition.TargetType,
+                                                            reference.Definition.TargetMultiplicity != null && reference.Definition.TargetMultiplicity.Text == "*",
                                                             reference.Definition.Kind.Text == "=>");
                         BuildAttributes(propertyReference, propertyReference.Attributes, member.Attributes);
                         element.Members.Add(propertyReference);
@@ -193,11 +271,11 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     if (opposite != null)
                     {
                         var propertyReference = new OppositeReferenceSymbol(this.Compilation, member, element, opposite.RelationshipName, opposite.Name);
-                        propertyReference.Definition = new RelationshipDefinitionSymbol(member, propertyReference, this.Compilation, 
-                                                            opposite.TargetType, 
-                                                            opposite.TargetMultiplicity != null && opposite.TargetMultiplicity.Text == "*", 
-                                                            node.Name, 
-                                                            opposite.SourceMultiplicity != null && opposite.SourceMultiplicity.Text == "*", 
+                        propertyReference.Definition = new RelationshipDefinitionSymbol(member, propertyReference, this.Compilation,
+                                                            opposite.TargetType,
+                                                            opposite.TargetMultiplicity != null && opposite.TargetMultiplicity.Text == "*",
+                                                            node.Name,
+                                                            opposite.SourceMultiplicity != null && opposite.SourceMultiplicity.Text == "*",
                                                             opposite.Kind.Text == "<=");
                         BuildAttributes(propertyReference, propertyReference.Attributes, member.Attributes);
                         element.Members.Add(propertyReference);

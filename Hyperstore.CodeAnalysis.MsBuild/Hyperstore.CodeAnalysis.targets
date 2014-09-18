@@ -8,19 +8,44 @@
   <!-- ################################################################################ -->
 
   <PropertyGroup>
-    <CompileDependsOn>
-      HyperstoreCodeGenerators;
-      $(CompileDependsOn)
-      </CompileDependsOn>
+    <LoadTimeSensitiveTargets>
+      $(LoadTimeSensitiveTargets);
+      DesignTimeHyperstoreCodeGenerators;
+    </LoadTimeSensitiveTargets>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PrepareResourcesDependsOn>
+      HyperstoreCodeGenerators;
+      $(PrepareResourcesDependsOn)
+    </PrepareResourcesDependsOn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Add Markup compilation to the CoreCompileDependsOn so that the IDE inproc compilers (particularly VB) can "see" the generated source files. -->
+    <CoreCompileDependsOn Condition="'$(BuildingInsideVisualStudio)' == 'true' ">
+      DesignTimeHyperstoreCodeGenerators;
+      $(CoreCompileDependsOn)
+    </CoreCompileDependsOn>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
+    <AvailableItemName Include="Hyperstore" />
+  </ItemGroup>
 
   <!--
   ================================================================
                 Code generation task
   ================================================================
   -->
+  <Target Name="DesignTimeHyperstoreCodeGenerators">
+    <!-- Only if we are not actually performing a compile i.e. we are in design mode -->
+    <CallTarget Condition="'$(BuildingProject)' != 'true'" Targets="HyperstoreCodeGenerators" />
+  </Target>
+
+
   <Target Name="HyperstoreCodeGenerators">
-       
+
     <!--
       Select all the .domain files from the current project
     -->
@@ -29,13 +54,12 @@
     </ItemGroup>
 
     <Message Importance="normal" Text="Hyperstore - Generate source files from domain files."/>
+    <Message Importance="high" Text ="@(DomainFiles)"/>
 
     <HyperstoreGeneratorTask Config="$(Configuration)" DomainFiles="@(DomainFiles)" OutputPath="$(IntermediateOutputPath)" >
-      
+
       <Output ItemName="Compile" TaskParameter="GeneratedCodeFiles" />
-      <Output ItemName="FileWrites" TaskParameter="GeneratedCodeFiles" />
 
     </HyperstoreGeneratorTask>
-    
   </Target>
 </Project>

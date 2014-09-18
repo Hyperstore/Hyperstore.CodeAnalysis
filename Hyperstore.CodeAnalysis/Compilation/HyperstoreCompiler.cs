@@ -14,7 +14,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
         private readonly string _outputDirectory;
         private HyperstoreCompilation _compilation;
 
-        private const string OutputFileName = "Domains.cs";
+        private const string OutputFileName = "Domains.g.cs";
 
         public IEnumerable<Diagnostic> Diagnostics
         {
@@ -58,7 +58,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 //}
                 //else
                 var i = 0;
-                foreach(var inputFile in inputFiles)
+                foreach (var inputFile in inputFiles)
                 {
                     string content;
                     string normalizedPath;
@@ -99,6 +99,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             OutputFilePath = MakeOutputFilePath();
             Directory.CreateDirectory(Path.GetDirectoryName(OutputFilePath));
             File.WriteAllText(OutputFilePath, output);
+            OutputFilePath = new FileInfo(OutputFilePath).FullName;
         }
 
         private string MakeOutputFilePath()

@@ -105,6 +105,11 @@ namespace Hyperstore.CodeAnalysis.Compilation
             return GetSemanticModel(syntaxTree.SourceFilePath);
         }
 
+        public IEnumerable<SemanticModel> SemanticModels
+        {
+            get { return DomainManager.SemanticModels; }
+        }
+
         public SemanticModel GetSemanticModel(string filePath)
         {
             return DomainManager.GetSemanticModel(filePath);

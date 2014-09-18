@@ -8,7 +8,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
 {
     partial class SemanticContext : HyperstoreSymbolVisitor
     {       
-        public override void VisitPropertySymbol(PropertySymbol property)
+        public void VisitPropertySymbol(PropertySymbol property)
         {
             if (property.PropertyType == null)
             {
@@ -37,6 +37,14 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
             var parent = property.Parent as ElementSymbol;
             CheckConstraints(property.Constraints);
+        }
+
+        public void VisitCommandPropertySymbol(CommandPropertySymbol property)
+        {
+            if (property.PropertyType == null)
+            {
+                AddDiagnostic(property.NameToken, "Unknow type {0} for property {1}. Must be a primitive types (string,int, double, bool, datetime, timespan, single..) or an external type", property.PropertyTypeReference.Name, property.Name);
+            }
         }
     }
 }

@@ -18,12 +18,15 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
         Enum = 9,
         Extern = 17,
         Uses = 33,
-        Domain=64
+        Domain = 64,
+        Constraint = 128,
+        Compute = 256,
+        ValueObject = 512
     }
 
     class TokenList : List<TokenInfo>
     {
-        public TokenInfo GetPreviousToken(TokenInfo token, int nb=1)
+        public TokenInfo GetPreviousToken(TokenInfo token, int nb = 1)
         {
             var pos = IndexOf(token);
             pos -= nb;
@@ -32,19 +35,26 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
             return null;
         }
 
+        // TODO make this check during parsing
         public DefinitionState IsInDefinition(TokenInfo currentToken)
         {
             var state = DefinitionState.None;
 
             var prv = currentToken;
-            while (prv != null && prv.Kind != TokenKind.Separator)
+            while (prv != null && (prv.Kind != TokenKind.Separator || prv.Value == ":"))
             {
                 if (prv.Value == "def")
                 {
-                    if( state == DefinitionState.None)
+                    if (state == DefinitionState.None)
                         state |= DefinitionState.Simple;
                     return state;
                 }
+                if (prv.Value == "check" || prv.Value == "validate" || prv.Value == "constraints")
+                    return DefinitionState.Constraint;
+                if (prv.Value == "compute")
+                    return DefinitionState.Compute;
+                if (prv.Value == "valueObject")
+                    return DefinitionState.ValueObject;
                 if (prv.Value == "domain")
                     return DefinitionState.Domain;
                 if (prv.Value == "extends")

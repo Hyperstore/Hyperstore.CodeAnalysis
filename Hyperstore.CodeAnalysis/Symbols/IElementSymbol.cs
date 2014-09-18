@@ -5,7 +5,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
     {
         System.Collections.Generic.IEnumerable<IConstraintSymbol> Constraints { get; }
         System.Collections.Generic.IEnumerable<IElementSymbol> DerivedElements { get; }
-        bool HasClassInheritance { get; }
+        bool HasGeneratedClassInheritance { get; }
         System.Collections.Generic.IEnumerable<ITypeSymbol> Implements { get; }
         bool IsA(IElementSymbol symbol);
         bool IsPartial { get; }

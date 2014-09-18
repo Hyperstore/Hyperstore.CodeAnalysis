@@ -38,9 +38,10 @@ namespace Hyperstore.CodeAnalysis.Syntax
             }
             Members = treeNode.ChildNodes[7].AstNode as ListSyntax<MemberDeclarationSyntax>;
             AddChild(Members);
-            if (treeNode.ChildNodes[8].ChildNodes.Count > 0)
+
+            if (treeNode.ChildNodes[8].ChildNodes.Count > 1)
             {
-                Constraints = treeNode.ChildNodes[8].ChildNodes[0].AstNode as ListSyntax<ConstraintDeclarationSyntax>;
+                Constraints = treeNode.ChildNodes[8].ChildNodes[1].AstNode as ListSyntax<ConstraintDeclarationSyntax>;
                 AddChild(Constraints);
             }
             else

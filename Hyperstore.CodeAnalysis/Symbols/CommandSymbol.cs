@@ -8,9 +8,16 @@ namespace Hyperstore.CodeAnalysis.Symbols
 {
     internal sealed class CommandSymbol : TypeSymbol, ICommandSymbol
     {
+        internal List<CommandPropertySymbol> Properties
+        {
+            get;
+            private set;
+        }
+
         internal CommandSymbol(Hyperstore.CodeAnalysis.Syntax.SyntaxNode node, Symbol parent, SyntaxToken name)
             : base(node, parent, name)
         {
+            Properties = new List<CommandPropertySymbol>();
         }
 
 
@@ -18,6 +25,12 @@ namespace Hyperstore.CodeAnalysis.Symbols
         {
             base.AcceptCore(visitor);
             visitor.VisitCommandSymbol(this);
+            Properties.ForEach(m => ((Hyperstore.CodeAnalysis.Symbols.IVisitableSymbol)m).Accept(visitor));
+        }
+
+        IEnumerable<ICommandPropertySymbol> ICommandSymbol.Properties
+        {
+            get { return this.Properties; }
         }
     }
 }
