@@ -41,6 +41,11 @@ namespace Hyperstore.CodeAnalysis.Editor.SyntaxHighlight
             {
                 try
                 {
+                    if (_diagnostics != null && _diagnostics.Count() > 0)
+                    {
+                        _backgroundParser.ErrorsWindow.ClearErrors();
+                    }
+
                     _diagnostics = newDiagnostics;
                     foreach (var span in difference)
                     {
@@ -54,20 +59,17 @@ namespace Hyperstore.CodeAnalysis.Editor.SyntaxHighlight
                     //if (ErrorHandler.IsCriticalException(ex))
                     //    throw;
                 }
+
+                if( _diagnostics.Count() > 0)
+                    _backgroundParser.ErrorsWindow.WriteErrors(_diagnostics);
             };
             _dispatcher.BeginInvoke(updateAction);
         }
 
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(Microsoft.VisualStudio.Text.NormalizedSnapshotSpanCollection spans)
         {
-            if (spans.Count == 0)
+            if (spans.Count == 0 || _diagnostics == null || _diagnostics.Count() == 0)
                 yield break;
-
-            if (_diagnostics == null || _diagnostics.Count() == 0)
-            {
-                _backgroundParser.ErrorsWindow.ClearErrors();
-                yield break;
-            }
 
             ITextSnapshot snapshot = spans[0].Snapshot;
             foreach (var diag in _diagnostics)
@@ -80,7 +82,7 @@ namespace Hyperstore.CodeAnalysis.Editor.SyntaxHighlight
                 }
             }
 
-            _backgroundParser.ErrorsWindow.WriteErrors(_diagnostics);
+
         }
 
         NormalizedSnapshotSpanCollection SymmetricDifference(NormalizedSnapshotSpanCollection first, NormalizedSnapshotSpanCollection second)

@@ -56,6 +56,10 @@
     <Reference Include="Microsoft.VisualStudio.Text.UI" />
     <Reference Include="Microsoft.VisualStudio.Text.UI.Wpf" />
     <Reference Include="Microsoft.VisualStudio.TextManager.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.TextTemplating.12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.TextTemplating.Interfaces.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.TextTemplating.Interfaces.11.0, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.TextTemplating.Interfaces.12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
@@ -74,13 +78,14 @@
     <Compile Include="Completion\CompletionCommandFilterProvider.cs" />
     <Compile Include="Completion\CompletionController.cs" />
     <Compile Include="Completion\CompletionProvider.cs" />
-    <Compile Include="Completion\CompletionSetExtensions.cs" />
     <Compile Include="Completion\CompletionSource.cs" />
     <Compile Include="Completion\CompletionSourceProvider.cs" />
     <Compile Include="Completion\Declaration.cs" />
     <Compile Include="Completion\DeclarationType.cs" />
     <Compile Include="Completion\HyperstoreCompletion.cs" />
     <Compile Include="Completion\HyperstoreCompletionSet.cs" />
+    <Compile Include="errorsValue.cs" />
+    <Compile Include="HyperstoreDirectiveProcessor.cs" />
     <Compile Include="Parsers\BackgroundParser.cs" />
     <Compile Include="Classifiers\Classifications.cs" />
     <Compile Include="Classifiers\ContentType.cs" />
@@ -109,6 +114,14 @@
     <Compile Include="Parsers\Resolver\VSHyperstoreResolver.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="HyperstoreSnippets.pkgdef">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Logo Hyperstore.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Snippets\CSharp\Hyperstore\HYSession.snippet">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
@@ -129,7 +142,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="HyperstoreSnippets.pkgdef">
+    <Content Include="HyperstoreProcessor.pkgdef">
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

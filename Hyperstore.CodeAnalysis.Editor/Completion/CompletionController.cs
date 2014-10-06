@@ -18,9 +18,10 @@ using OleConstants = Microsoft.VisualStudio.OLE.Interop.Constants;
 
 namespace Hyperstore.CodeAnalysis.Editor.Completion
 {
-
+    // Completion is an adaptation from Microsoft python code base  http://code.msdn.microsoft.com/windowsdesktop/IronPython-Integration-6b03988d/view/SourceCode
+    // 
     /// <summary> 
-    /// Triggers the intellisense completion for the iron python editor. 
+    /// Triggers the intellisense completion
     /// </summary> 
     internal class CompletionController : IIntellisenseController, IOleCommandTarget //, IVsExpansionClient 
     {
@@ -98,7 +99,6 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                             // Attach to the active session events 
                             if (activeSession != null)
                             {
-
                                 activeSession.Dismissed += new System.EventHandler(OnActiveSessionDismissed);
                                 activeSession.Committed += new System.EventHandler(OnActiveSessionCommited);
                             }
@@ -110,7 +110,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
 
         private bool IsCommitKey(char key)
         {
-            return key == '.' || key == '{' || Char.IsWhiteSpace(key);
+            return key == '.' || key == '{' || Char.IsWhiteSpace(key) || key == ';' || key == '*';
         }
 
         private bool IsTriggerKey(char key)

@@ -94,6 +94,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             }
         }
 
+        
         public static HyperstoreCompilation Create(IEnumerable<HyperstoreSyntaxTree> syntaxTrees, ISemanticModelResolver resolver = null, HyperstoreCompilationOptions options = HyperstoreCompilationOptions.Compilation)
         {
             return new HyperstoreCompilation(syntaxTrees, resolver, options);
@@ -153,7 +154,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             if (HasErrors)
                 return null;
 
-            var ctx = new Hyperstore.CodeAnalysis.Generation.HyperstoreGeneratorContext();
+            var ctx = new Hyperstore.CodeAnalysis.Generation.HyperstoreGeneratorContext(this);
 
             if (generator == null)
             {
@@ -176,7 +177,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             if (_merger != null || HasSyntaxErrors)
                 return;
 
-            DomainManager.Build();
+             DomainManager.Build();
             _merger = new DomainMerger(this);
 
             if (!HasCompilationErrors && Options == HyperstoreCompilationOptions.Compilation)
@@ -187,7 +188,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     var visitor = new SemanticContext(this);
                     var walker = new HyperstoreSymbolWalker(visitor);
                     foreach (var domain in _merger.Domains)
+                    {
+                        visitor.CurrentDomain = domain;
                         walker.Visit(domain);
+                    }
                 }
             }
         }
@@ -197,11 +201,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
             return DomainManager.FindTypeSymbol(currentDomain, name);
         }
 
-        public IModelBuilder ResolveDomain(IUsingSymbol uses)
+        public IDomainSymbol ResolveDomain(IDomainSymbol domain, string uri)
         {
-            if (uses.Domain == null)
+            if (domain == null || uri == null)
                 return null;
-            return DomainManager.FindDomain(uses.Domain, uses.Path);
+            var model = DomainManager.FindDomain(domain, uri);
+            return model != null ? model.Domain : null;
         }
 
         public void Dispose()

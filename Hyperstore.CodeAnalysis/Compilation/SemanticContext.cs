@@ -10,6 +10,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
     {
         private readonly HyperstoreCompilation _compilation;
 
+        internal DomainSymbol CurrentDomain
+        {
+            get;
+            set;
+        }
+
         public SemanticContext(HyperstoreCompilation compilation)
         {
             _compilation = compilation;
@@ -110,21 +116,24 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         public void VisitUsingSymbol(UsingSymbol uses)
         {
-            var domain = uses.Domain;
+            var domain = CurrentDomain;
 
-            var model = Compilation.ResolveDomain(uses);
-            if (model == null)
+            var referencedDomain = Compilation.ResolveDomain(uses.Domain, uses.DomainUri.Text);
+            if (referencedDomain == null)
             {
                 Compilation.AddDiagnostic(uses.DomainUri, "Unable to found referenced domain {0}", uses.DomainUri.Text);
             }
-
+            else if (referencedDomain.QualifiedName == domain.QualifiedName)
+            {
+                Compilation.AddDiagnostic(uses.DomainUri, "A domain cannot reference itself {0}", uses.DomainUri.Text);
+            }
         }
 
         public void VisitAttributeSymbol(AttributeSymbol attr)
         {
             var name = attr.Name.ToLower();
 
-            if (name == "observable" || name == "dynamic" || name == "ignoregeneration")
+            if (name == "observable" || name == "dynamic" || name == "ignore")
             {
                 if (attr.Arguments.Count() != 0)
                     AddDiagnostic(attr, "Attribute must have no argument");
@@ -150,8 +159,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     }
                 }
             }
-            else
-                AddDiagnostic(attr, "Invalid attribute name {0} for {1}", attr.Name, attr.Parent.Name);
+            //else
+            //    AddDiagnostic (attr, "Invalid attribute name {0} for {1}", attr.Name, attr.Parent.Name);
         }
 
         #region override

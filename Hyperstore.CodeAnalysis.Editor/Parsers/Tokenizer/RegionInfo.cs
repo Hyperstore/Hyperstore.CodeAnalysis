@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hyperstore.CodeAnalysis.Editor.Parsers
+namespace Hyperstore.CodeAnalysis.Editor.Parser
 {
     class RegionInfo
     {

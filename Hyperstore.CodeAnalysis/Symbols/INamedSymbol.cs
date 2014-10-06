@@ -6,5 +6,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
         System.Collections.Generic.IEnumerable<IAttributeSymbol> Attributes { get; }
 
         bool HasAttribute(string name);
+
+        bool Skip { get; }
     }
 }

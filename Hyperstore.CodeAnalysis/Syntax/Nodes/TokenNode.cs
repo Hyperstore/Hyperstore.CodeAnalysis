@@ -19,11 +19,21 @@ namespace Hyperstore.CodeAnalysis.Syntax
         {
             get
             {
-                var trivia = LeadingTrivia.FirstOrDefault();
-                var startPos = trivia != null ? trivia.Span : Span;
+                var startPos = Span;
+                if (LeadingTrivia != null)
+                {
+                    var trivia = LeadingTrivia.FirstOrDefault();
+                    if (trivia != null)
+                        startPos = trivia.Span;
+                }
 
-                trivia = TrailingTrivia.LastOrDefault();
-                var endPos = trivia != null ? trivia.Span : Span;
+                var endPos = Span;
+                if (TrailingTrivia != null)
+                {
+                    var trivia = TrailingTrivia.LastOrDefault();
+                    if (trivia != null)
+                        endPos = trivia.Span;
+                }
 
                 return new SourceSpan(startPos.Location, endPos.Location.Position + endPos.Length - startPos.Location.Position);
             }

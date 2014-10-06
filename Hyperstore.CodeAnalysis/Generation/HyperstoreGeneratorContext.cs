@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hyperstore.CodeAnalysis.Compilation;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -37,9 +38,11 @@ namespace Hyperstore.CodeAnalysis.Generation
         private readonly StringBuilder _global;
         private TextWriter[] _writers;
         private Stack<TextWriter> _current;
+        public HyperstoreCompilation Compilation { get; private set; }
 
-        public HyperstoreGeneratorContext()
+        public HyperstoreGeneratorContext(HyperstoreCompilation compilation)
         {
+            Compilation = compilation;
             _writers = new TextWriter[6];
             _current = new Stack<TextWriter>();
             _global = new StringBuilder();

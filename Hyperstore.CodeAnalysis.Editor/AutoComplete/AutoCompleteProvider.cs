@@ -10,9 +10,9 @@ using Hyperstore.CodeAnalysis.Editor.AutoComplete;
 
 namespace Hyperstore.CodeAnalysis.Editor.AutoComplete
 {
-    //[Export(typeof(IVsTextViewCreationListener))]
-    //[ContentType(Hyperstore.CodeAnalysis.Editor.ContentTypeAndFileExtensionDefinition.ContentTypeName)]
-    //[TextViewRole(PredefinedTextViewRoles.Editable)]
+    [Export(typeof(IVsTextViewCreationListener))]
+    [ContentType(Hyperstore.CodeAnalysis.Editor.ContentTypeAndFileExtensionDefinition.ContentTypeName)]
+    [TextViewRole(PredefinedTextViewRoles.Editable)]
     internal class MultiEditFilterProvider : IVsTextViewCreationListener
     {
         [Export(typeof(AdornmentLayerDefinition))]

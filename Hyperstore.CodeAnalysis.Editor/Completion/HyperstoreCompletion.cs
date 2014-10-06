@@ -11,7 +11,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
         internal HyperstoreCompletion(Declaration declaration, IGlyphService glyphService)
             : base(declaration.Title)
         {
-            this.InsertionText = declaration.Title;
+            this.InsertionText = declaration.InsertionText ?? declaration.Title;
             this.Description = declaration.Description;
             this.IconSource = glyphService.GetGlyph(GetGroupFromDeclaration(declaration), GetScopeFromDeclaration(declaration));
         }
@@ -21,7 +21,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             return StandardGlyphItem.GlyphItemPublic;
         }
 
-        
+
         private StandardGlyphGroup GetGroupFromDeclaration(Declaration declaration)
         {
             switch (declaration.Type)

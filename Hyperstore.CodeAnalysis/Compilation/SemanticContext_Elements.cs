@@ -8,9 +8,11 @@ namespace Hyperstore.CodeAnalysis.Compilation
 {
     partial class SemanticContext : HyperstoreSymbolVisitor
     {
+        private string[] _reservedNames = { "ModelEntity", "ModelRelationship" };
+
         public void VisitEntitySymbol(EntitySymbol symbol)
         {
-
+            CheckReservedNames(symbol);
             var element = symbol as ElementSymbol;
             CheckConstraints(element.Constraints);
 
@@ -19,8 +21,15 @@ namespace Hyperstore.CodeAnalysis.Compilation
             CheckImplements(element);
         }
 
+        private void CheckReservedNames(NamedSymbol symbol)
+        {
+            if( _reservedNames.Contains(symbol.Name, StringComparer.OrdinalIgnoreCase))
+                AddDiagnostic(symbol.NameToken, "Invalid reserved name {0}. Use another name for this element.", symbol.Name);
+        }
+
         public void VisitValueObjectSymbol(ValueObjectSymbol element)
         {
+            CheckReservedNames(element);
             CheckConstraints(element.Constraints);
 
             var type = element.TypeReference.Value as IExternSymbol;
@@ -56,6 +65,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         public void VisitRelationshipSymbol(RelationshipSymbol symbol)
         {
+            CheckReservedNames(symbol);
+
             var element = symbol as ElementSymbol;
             CheckConstraints(element.Constraints);
 
@@ -103,13 +114,6 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     }
                     extendsReference = r;
                 }
-            }
-
-            if (element.SuperType != null)
-            {
-                element.SuperType.AddDerived(element);
-                if (!element.HasAttribute("IgnoreGeneration")) // Else element will be not generated
-                    element.HasGeneratedClassInheritance = true;
             }
         }
     }

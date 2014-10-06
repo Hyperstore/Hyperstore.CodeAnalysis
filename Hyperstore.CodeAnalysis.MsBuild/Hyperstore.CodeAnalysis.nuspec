@@ -2,13 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Hyperstore.DomainLanguage</id>
-        <version>0.9.252</version>
+        <version>0.9.268</version>
         <title>Hyperstore Domain Definition Language</title>
         <authors>Zenasoft</authors>
-        <projectUrl>http://www.zenasoft.com</projectUrl>
-        <iconUrl>http://www.zenasoft.com/wp-content/uploads/2014/04/Logo-Hyperstore1.gif</iconUrl>
+        <projectUrl>http://www.hyperstore.org</projectUrl>
+        <iconUrl>http://www.hyperstore.org/img/hyperstore-icon.png</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Hyperstore Domain Definition Language template. Version earlier than 0.9.200 are not updatable, you must uninstall and reinstall the package. This package uses a specific version of Irony (http://irony.codeplex.com)</description>
+        <description>Hyperstore Domain Definition Language template. This package uses a specific version of Irony (http://irony.codeplex.com)</description>
         <copyright>Zenasoft</copyright>
         <tags>Hyperstore</tags>
         <dependencies>

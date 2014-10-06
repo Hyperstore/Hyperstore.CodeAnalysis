@@ -1,4 +1,4 @@
-﻿using Hyperstore.CodeAnalysis.Editor.Parsers;
+﻿using Hyperstore.CodeAnalysis.Editor.Parser;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
@@ -38,7 +38,8 @@ namespace Hyperstore.CodeAnalysis.Editor.Classifiers
         {
             _buffer = buffer;
             _classificationTypeRegistry = classificationTypeRegistry;
-            _parser = buffer.Properties.GetOrCreateSingletonProperty<HyperstoreTokenizer>(() => new HyperstoreTokenizer()); _buffer.Changed += OnBufferChanged;
+            _parser = buffer.Properties.GetOrCreateSingletonProperty<HyperstoreTokenizer>(() => new HyperstoreTokenizer());
+            _buffer.Changed += OnBufferChanged;
             _dispatcher = Dispatcher.CurrentDispatcher;
         }
 

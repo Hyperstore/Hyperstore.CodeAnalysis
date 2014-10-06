@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hyperstore.CodeAnalysis.Editor.Parsers
+namespace Hyperstore.CodeAnalysis.Editor.Parser
 {
     class HyperstoreLexer
     {
@@ -80,7 +80,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
 
             RegionData region = null;
             bool skipToken = false;
-            var token = NextToken();
+            var token = NextTokenSafe();
             for (; ; )
             {
                 if (token.Kind == TokenKind.EOF)
@@ -137,7 +137,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
 
                 result.Tokens.Add(token);
                 if (!skipToken)
-                    token = NextToken();
+                    token = NextToken(region != null);
                 skipToken = false;
             }
 
@@ -157,29 +157,42 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
             return r;
         }
 
-        public TokenInfo NextToken()
+        private TokenInfo NextTokenSafe()
         {
-            SkipWhiteSpace();
-
-            TokenInfo token;
-            if (_currentChar == '{' && _lastToken.IsPreCSharpCodeToken())
+            try
             {
-                var r = new CSharpCodeParser(_buffer, _position).Parse();
-                token = new TokenInfo(TokenKind.CSharpCode, CreateSpan(_position, r.Item1 - _position), null, r.Item2);
-                _position = r.Item1 + 1;
-                NextChar(); // Skip final }
+                return NextToken();
             }
-            else if (_currentChar == Eof)
-                token = TokenInfo.EOF;
-            else if (_currentChar == '\"')
-                token = ParseBlock(TokenKind.String, '\"', false);
-            else if (_currentChar == '[')
-                token = ParseBlock(TokenKind.Attribute, ']', true);
-            else
-                token = ParseToken();
+            catch (TypeLoadException)
+            {
+                System.Windows.MessageBox.Show("Unable to load Hyperstore compiler assembly. Ensure you are the last version installed of the Hyperstore Designer and the last version of the Hyperstore Domain Language Nuget package.");
+            }
+            return TokenInfo.EOF;
+        }
 
-            _lastToken = token;
-            return token;
+        private TokenInfo NextToken(bool isInRegion=false)
+        {
+                SkipWhiteSpace();
+
+                TokenInfo token;
+                if (_currentChar == '{' && _lastToken.IsPreCSharpCodeToken(isInRegion))
+                {
+                    var r = new CSharpCodeParser(_buffer, _position).Parse();
+                    token = new TokenInfo(TokenKind.CSharpCode, CreateSpan(_position, r.Item1 - _position), null, r.Item2);
+                    _position = r.Item1 + 1;
+                    NextChar(); // Skip final }
+                }
+                else if (_currentChar == Eof)
+                    token = TokenInfo.EOF;
+                else if (_currentChar == '\"')
+                    token = ParseBlock(TokenKind.String, '\"', false);
+                else if (_currentChar == '[')
+                    token = ParseBlock(TokenKind.Attribute, ']', true);
+                else
+                    token = ParseToken();
+
+                _lastToken = token;
+                return token;
         }
 
         private TokenInfo ParseToken()

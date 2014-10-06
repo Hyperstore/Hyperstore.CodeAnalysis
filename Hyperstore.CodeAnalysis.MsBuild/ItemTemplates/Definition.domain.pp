@@ -3,7 +3,7 @@
 domain $assemblyname$.MyModel
 {
     def entity NamedElement {
-        Name : string check error "Name is required"  {return !String.IsNullOrEmpty(self.Name);};
+        Name : string check error "Name is required"  {!String.IsNullOrEmpty(self.Name)};
     } 	 
 
     def entity Library extends NamedElement

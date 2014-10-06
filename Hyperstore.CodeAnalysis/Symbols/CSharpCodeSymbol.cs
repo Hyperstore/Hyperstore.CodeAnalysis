@@ -31,13 +31,13 @@ namespace Hyperstore.CodeAnalysis.Symbols
                 switch (Kind)
                 {
                     case CSharpCodeKind.Constraint:
-                        return String.Format("self => {{ {0} }}", Code);
+                        return String.Format("self => {0}", Code);
                     case CSharpCodeKind.WhereClause:
-                        return String.Format("item => {{ {0} }}", Code);
+                        return String.Format("item => {0}", Code);
                     case CSharpCodeKind.Compute:
-                        return String.Format("() => {{ {0} }}", Code);
+                        return String.Format("() => {0}", Code);
                     case CSharpCodeKind.SelectClause:
-                        return String.Format("item =>  {{ {0} }}", Code);
+                        return String.Format("item => {0}", Code);
                     case CSharpCodeKind.DefaultValue:
                         return Code;
                 }

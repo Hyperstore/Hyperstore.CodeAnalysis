@@ -56,7 +56,10 @@ namespace Hyperstore.CodeAnalysis.MsBuild
                     GeneratedCodeFiles = new ITaskItem[0];
                 }
                 else
+                {
                     GeneratedCodeFiles = new TaskItem[] { new TaskItem(compiler.OutputFilePath) };
+                    Log.LogMessageFromText(String.Format("File generated : {0}.", compiler.OutputFilePath), MessageImportance.Normal);
+                }
             }
             catch (Exception ex)
             {

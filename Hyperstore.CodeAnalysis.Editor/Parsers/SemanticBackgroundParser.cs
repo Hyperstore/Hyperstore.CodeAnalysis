@@ -77,7 +77,8 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            Compilation.Dispose();
+            if (Compilation != null)
+                Compilation.Dispose();
         }
     }
 }

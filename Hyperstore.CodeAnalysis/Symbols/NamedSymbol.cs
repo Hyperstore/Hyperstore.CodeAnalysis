@@ -11,7 +11,12 @@ namespace Hyperstore.CodeAnalysis.Symbols
         public List<AttributeSymbol> Attributes
         {
             get;
-            private set;
+            protected set;
+        }
+
+        public bool Skip
+        {
+            get { return HasAttribute("Ignore"); }
         }
 
         internal NamedSymbol(Hyperstore.CodeAnalysis.Syntax.SyntaxNode node, Hyperstore.CodeAnalysis.Symbols.Symbol parent, SyntaxToken name)

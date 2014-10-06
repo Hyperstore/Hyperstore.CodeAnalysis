@@ -1,5 +1,5 @@
 ﻿using Hyperstore.CodeAnalysis.Editor.Classifiers;
-using Hyperstore.CodeAnalysis.Editor.Parsers;
+using Hyperstore.CodeAnalysis.Editor.Parser;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;

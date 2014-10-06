@@ -10,10 +10,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
 {
     internal abstract class ElementSymbol : TypeSymbol, Hyperstore.CodeAnalysis.Symbols.IElementSymbol
     {
-        private HashSet<ElementSymbol> _derived = new HashSet<ElementSymbol>();
-
-        public IEnumerable<ElementSymbol> DerivedElements { get { return _derived; } }
-
         public List<ConstraintSymbol> Constraints { get; private set; }
 
         public IEnumerable<PropertySymbol> Properties { get { return Members.OfType<PropertySymbol>(); } }
@@ -63,13 +59,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
             _implements.AddRange(implements.Select(i => new LazyRef<TypeSymbol>(i, compilation, Domain)));
         }
 
-        public bool HasGeneratedClassInheritance { get; internal set; }
-
-        internal override void AddDerived(ElementSymbol elem)
-        {
-            _derived.Add(elem);
-        }
-
         public bool IsA(IElementSymbol symbol)
         {
             if (this == symbol)
@@ -85,11 +74,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
         IEnumerable<IConstraintSymbol> IElementSymbol.Constraints
         {
             get { return this.Constraints; }
-        }
-
-        IEnumerable<IElementSymbol> IElementSymbol.DerivedElements
-        {
-            get { return this.DerivedElements; }
         }
 
         IEnumerable<ITypeSymbol> IElementSymbol.Implements

@@ -4,8 +4,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
     public interface IElementSymbol : ITypeSymbol
     {
         System.Collections.Generic.IEnumerable<IConstraintSymbol> Constraints { get; }
-        System.Collections.Generic.IEnumerable<IElementSymbol> DerivedElements { get; }
-        bool HasGeneratedClassInheritance { get; }
         System.Collections.Generic.IEnumerable<ITypeSymbol> Implements { get; }
         bool IsA(IElementSymbol symbol);
         bool IsPartial { get; }

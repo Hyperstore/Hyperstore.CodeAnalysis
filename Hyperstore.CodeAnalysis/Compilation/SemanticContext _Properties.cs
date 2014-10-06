@@ -12,10 +12,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
         {
             if (property.PropertyType == null)
             {
-                AddDiagnostic(property.NameToken, "Unknow type {0} for property {1}. Must be a primitive types (string,int, double, bool, datetime, timespan, single..) or an external type", property.PropertyTypeReference.Name, property.Name);
+                AddDiagnostic(property.PropertyTypeReference.SyntaxTokenOrNode, "Unknow type {0} for property {1}. Must be a primitive types (string,int, double, bool, datetime, timespan, single..) or an external type", property.PropertyTypeReference.Name, property.Name);
             }
 
-            var rel = property.PropertyType as RelationshipSymbol;
+            var rel = property.PropertyType as IRelationshipSymbol;
             if (rel != null)
             {
                 if (property.DefaultValue != null)

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hyperstore.CodeAnalysis.Editor.Parsers
+namespace Hyperstore.CodeAnalysis.Editor.Parser
 {
     [DebuggerDisplay("{Value}")]
     internal class TokenInfo
@@ -32,10 +32,10 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
             IsMultiline = isMultiline;
         }
 
-        internal bool IsPreCSharpCodeToken()
+        internal bool IsPreCSharpCodeToken(bool isInRegion)
         {
             if (Value == null)
-                return Kind == TokenKind.String;
+                return Kind == TokenKind.String && isInRegion;
 
             switch (Value)
             {

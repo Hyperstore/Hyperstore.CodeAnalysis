@@ -34,6 +34,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 }
 
                 var mergedDomain = domains.FirstOrDefault(d => d.ExtendedDomainUri == null);
+                if( mergedDomain == null)
+                {
+                    mergedDomain = domains.First();
+                }
                 mergedDomains.Add(mergedDomain);
 
                 foreach (var domain in domains)
@@ -41,14 +45,6 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     if (domain == mergedDomain)
                         continue;
 
-                    if (domain.ExtendedDomainUri != null)
-                    {
-                        if (_compilation.DomainManager.FindDomain(domain, domain.ExtendedDomainUri.Text) == null)
-                        {
-                            _compilation.AddDiagnostic(domain.ExtendedDomainUri, "Unable to found domain to extends at {0}", domain.ExtendedDomainUri.Text);
-                            continue;
-                        }
-                    }
 
                     foreach (var uses in domain.Usings)
                     {
@@ -71,7 +67,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                         {
                             mergedDomain.Members.Add(element.Name, element);
                         }
-                        else
+                        else if (element != null)
                         {
                             var mergedElement = element as ElementSymbol;
                             var elementToMerge = member as ElementSymbol;
@@ -82,6 +78,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
                                 continue;
                             }
                             MergeElement(mergedElement, elementToMerge);
+                        }
+                        else
+                        {
+                            mergedDomain.Members.Add(member.Name, member);
                         }
                     }
                 }

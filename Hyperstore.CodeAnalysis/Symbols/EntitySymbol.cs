@@ -8,7 +8,7 @@ using Hyperstore.CodeAnalysis.Syntax;
 
 namespace Hyperstore.CodeAnalysis.Symbols
 {
-    internal sealed class EntitySymbol : ElementSymbol, IEntitySymbol
+    internal class EntitySymbol : ElementSymbol, IEntitySymbol
     {
         internal EntitySymbol(Hyperstore.CodeAnalysis.Syntax.SyntaxNode node, Symbol parent, SyntaxToken name)
             : base(node, parent, name)

@@ -1,0 +1,9 @@
+// Sample Domain model definition
+// Use Hyperstore Domain Language Editor extension to edit this file.
+domain ConsoleApplication1.MyModel2
+{
+    def entity NamedElement {  
+        Name : string check error "Name is required"  {!String.IsNullOrEmpty(self.Name)};
+    } 	 
+
+}

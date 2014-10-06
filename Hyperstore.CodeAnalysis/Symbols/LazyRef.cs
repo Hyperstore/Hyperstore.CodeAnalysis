@@ -8,7 +8,7 @@ using Hyperstore.CodeAnalysis.Syntax;
 
 namespace Hyperstore.CodeAnalysis.Symbols
 {
-    public class LazyRef<T> where T : ITypeSymbol
+    public class LazyRef<T> where T : class, ITypeSymbol
     {
         private HyperstoreCompilation _compilation;
         private readonly string _name;
@@ -57,7 +57,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
                 if (!IsResolved)
                 {
                     if (_name != null && _value == null)
-                        _value = (T)_compilation.FindTypeSymbol(_containingDomain, _name);
+                        _value = _compilation.FindTypeSymbol(_containingDomain, _name) as T;
                     if (_value != null || _name == null)
                     {
                         _compilation = null;

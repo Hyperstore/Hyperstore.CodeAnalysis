@@ -25,7 +25,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         internal void BuildModel()
         {
-            if (Model == null)
+             if (Model == null)
             {
                 var model = new ModelBuilder(Compilation);
                 model.Build(SyntaxTree);
@@ -83,7 +83,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             _resolver.Initialize(compilation);
             RegisterPrimitiveDomain();
         }
-
+       
         internal void AddSyntaxTree(HyperstoreSyntaxTree syntaxTree)
         {
             var filePath = syntaxTree.SourceFilePath ?? syntaxTree.GetHashCode().ToString();
@@ -123,7 +123,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         private void RegisterPrimitiveDomain()
         {
-            var primitives = new List<ExternSymbol>();
+            var primitives = new List<TypeSymbol>();
 
             primitives.Add(new ExternSymbol("string", "string"));
             primitives.Add(new ExternSymbol("int", "int"));
@@ -142,10 +142,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
             primitives.Add(new ExternSymbol("double", "double"));
             primitives.Add(new ExternSymbol("float", "float"));
 
-            PrimitivesDomain = new DomainSymbol() { Members = primitives.ToDictionary(p => p.Name, p => (TypeSymbol)p) };
-            //_classes = new List<IClassNode>();
-            //primitives.Add(new EntitySymbol("ModelElement", "PrimitivesDomainModel.ModelElementMetaClass"));
-            //primitives.Add(new RelationshipSymbol("ModelRelationship", "PrimitivesDomainModel.ModelRelationshipMetaClass"));
+            PrimitivesDomain = new DomainSymbol() { Namespace="Hyperstore.Modeling", Members = primitives.ToDictionary(p => p.Name, p => p) };
+
+
+            PrimitivesDomain.Members.Add("ModelEntity", new PrimitiveEntitySymbol(PrimitivesDomain));
+            PrimitivesDomain.Members.Add("ModelRelationship", new PrimitiveRelationshipSymbol(PrimitivesDomain));
+
         }
 
         internal ITypeSymbol FindPrimitive(string qualifiedName)
@@ -236,6 +238,16 @@ namespace Hyperstore.CodeAnalysis.Compilation
             TypeSymbol symbol;
             if (domain.Members.TryGetValue(name, out symbol))
                 return symbol;
+
+            if (currentDomain.ExtendedDomainPath != null)
+            {
+                var model = FindDomain(currentDomain, currentDomain.ExtendedDomainPath);
+                if( model != null && model.Domain != null)
+                {
+                    if (((DomainSymbol)model.Domain).Members.TryGetValue(name, out symbol))
+                        return symbol;
+                }
+            }
 
             return FindPrimitive(name);
         }

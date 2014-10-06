@@ -14,5 +14,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
         string Namespace { get; }
         string QualifiedName { get; }
         System.Collections.Generic.IEnumerable<IUsingSymbol> Usings { get; }
+
+        string ExtendedDomainPath { get; }
     }
 }

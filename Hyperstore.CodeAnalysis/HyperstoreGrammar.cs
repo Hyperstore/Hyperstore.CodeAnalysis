@@ -30,7 +30,6 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             var rBr = ToTerm("}");
 
             var qualified_identifier = new NonTerminal("QualifiedIdentifier", typeof(QualifiedNameSyntax));
-            var attributeTypeIdentifier = new NonTerminal("AttributeTypeIdentifier", typeof(QualifiedNameSyntax));
             KeyTerm dot = ToTerm(".", "dot");
 
             #region
@@ -212,7 +211,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
 
             // Propriétés
             attributeDeclaration.Rule =
-                 generationAttributeList + identifier + ":" + attributeTypeIdentifier + defaultvalue_opt + constraintDeclarations + ";";
+                 generationAttributeList + identifier + ":" + qualified_identifier + defaultvalue_opt + constraintDeclarations + ";";
 
             defaultvalue_opt.Rule =
                 Empty
@@ -275,8 +274,6 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             RegisterKeywords("uses", "use", "partial", "where", "error", "valueObject", "constraints", "warning", "entity", "extern", "*", "domain", "relationship", "command", "interface", "=>", "->", "<-", "<=", "def", "enum", "extends", "implements", "as", "constraint", "check", "validate", "compute");
 
             LanguageFlags = LanguageFlags.CreateAst | Irony.Parsing.LanguageFlags.NewLineBeforeEOF;
-
-            attributeTypeIdentifier.Rule = qualified_identifier.Rule;
         }
 
         public void RegisterKeywords(params string[] keywords)

@@ -42,7 +42,23 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 if (String.IsNullOrEmpty(partial))
                 {
                     Compilation.AddDiagnostic(domainNode.Extends, "A domain path is required.");
+                } 
+                else 
+                {
+                    try
+                    {
+                        var extendedDomain = Compilation.DomainManager.FindDomain(Domain, partial);
+                        if (extendedDomain == null)
+                        {
+                            Compilation.AddDiagnostic(domainNode.Extends, "Unable to found domain to extends {0}", partial);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        Compilation.AddDiagnostic(domainNode.Extends, "Invalid domain path {0}", partial);
+                    }
                 }
+
                 Domain.ExtendedDomainUri = domainNode.Extends;
             }
 
@@ -251,6 +267,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                         element.Members.Add(p);
                         continue;
                     }
+
                     var reference = member as Syntax.ReferenceDeclarationSyntax;
                     if (reference != null)
                     {

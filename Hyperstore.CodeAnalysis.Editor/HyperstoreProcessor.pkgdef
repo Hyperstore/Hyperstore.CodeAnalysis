@@ -1,0 +1,6 @@
+﻿[$RootKey$\TextTemplating]
+[$RootKey$\TextTemplating\DirectiveProcessors]
+[$RootKey$\TextTemplating\DirectiveProcessors\HyperstoreProcessor]
+@="Hyperstore domain model processor"
+"Class"="Hyperstore.CodeAnalysis.T4.HyperstoreProcessor"
+"CodeBase"="$PackageFolder$\Hyperstore.CodeAnalysis.Editor.dll"

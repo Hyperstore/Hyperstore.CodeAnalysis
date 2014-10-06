@@ -37,7 +37,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Classifiers
         {
             this.DisplayName = ClassificationDefinitions.CSharpCode;
             this.IsItalic = true;
-            this.BackgroundColor = Colors.Gainsboro;
+            this.ForegroundColor = Colors.Teal;
         }
     }
 

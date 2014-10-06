@@ -12,5 +12,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
         public string Description { get; set; }
 
         public DeclarationType Type { get; set; }
+
+        public string InsertionText { get; set; }
     }
 }

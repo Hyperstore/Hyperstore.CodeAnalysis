@@ -17,6 +17,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
         internal virtual void AddDerived(ElementSymbol elem)
         { }
 
-        public string QualifiedName { get { return String.Format("{0}.{1}", Domain.Namespace, this.Name); } }
+        public virtual string QualifiedName { get { return String.Format("{0}.{1}", Domain.Namespace, this.Name); } }
     }
 }

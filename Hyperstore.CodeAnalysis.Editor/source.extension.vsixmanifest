@@ -1,9 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Hyperstore.CodeAnalysis.Editor..e6846676-bad3-4f05-b6a9-d0722fa25d33" Version="0.9.229" Language="en-US" Publisher="Zenasoft" />
-    <DisplayName>Hyperstore.CodeAnalysis.Editor</DisplayName>
-    <Description>This is a sample classifier extension to the Visual Studio Editor.</Description>
+    <Identity Id="Hyperstore.CodeAnalysis.Editor..e6846676-bad3-4f05-b6a9-d0722fa25d33" Version="0.9.266" Language="en-US" Publisher="Zenasoft" />
+    <DisplayName>Hyperstore Domain Language Editor</DisplayName>
+    <Description xml:space="preserve">Hyperstore domain language designer with syntax highlight, colorization and completion.</Description>
+    <MoreInfo>http://www.hyperstore.org</MoreInfo>
+    <PreviewImage>Logo Hyperstore.gif</PreviewImage>
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="12.0" />
@@ -17,6 +19,7 @@
   <Assets>
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="File" Path="HyperstoreSnippets.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="File" Path="HyperstoreProcessor.pkgdef" />
     <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="Project" d:ProjectName="Hyperstore.CodeAnalysis.Irony" Path="|Hyperstore.CodeAnalysis.Irony|" AssemblyName="|Hyperstore.CodeAnalysis.Irony;AssemblyName|" />
   </Assets>
 </PackageManifest>

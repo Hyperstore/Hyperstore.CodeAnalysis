@@ -8,7 +8,7 @@ namespace Hyperstore.CodeAnalysis.Syntax
 {
     public sealed class PropertySyntax : MemberDeclarationSyntax
     {
-        public SyntaxToken PropertyType { get; private set; }
+        public QualifiedNameSyntax PropertyType { get; private set; }
 
         public DefaultValueSyntax DefaultValue { get; private set; }
 
@@ -25,7 +25,7 @@ namespace Hyperstore.CodeAnalysis.Syntax
             Name = new SyntaxToken(treeNode.ChildNodes[1].Token);
             AddChild(Name);
 
-            PropertyType = new SyntaxToken(treeNode.ChildNodes[2].ChildNodes[0].Token);
+            PropertyType = treeNode.ChildNodes[2].AstNode as QualifiedNameSyntax;
             AddChild(PropertyType);
 
             DefaultValue = treeNode.ChildNodes[3].AstNode as DefaultValueSyntax;

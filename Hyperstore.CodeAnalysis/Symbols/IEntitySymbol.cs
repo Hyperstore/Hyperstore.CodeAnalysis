@@ -7,5 +7,5 @@ namespace Hyperstore.CodeAnalysis.Symbols
 {
     public interface IEntitySymbol : IElementSymbol
     {
-    }
+    }   
 }

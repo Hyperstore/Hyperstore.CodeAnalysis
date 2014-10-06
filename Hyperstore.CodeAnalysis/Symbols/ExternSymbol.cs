@@ -14,7 +14,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
         Primitive
     }
 
-    internal sealed class ExternSymbol : TypeSymbol, Hyperstore.CodeAnalysis.Symbols.IExternSymbol
+    internal class ExternSymbol : TypeSymbol, Hyperstore.CodeAnalysis.Symbols.IExternSymbol
     {
         internal ExternSymbol(string alias, string fullName)
             : base(null, null, null)

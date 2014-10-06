@@ -12,7 +12,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
         public void VisitPropertyReferenceSymbol(PropertyReferenceSymbol reference)
         {
             var parent = reference.Parent as ElementSymbol;
-            var domain = parent.Domain;
+            // Take the merged domain
+            var domain = CurrentDomain;
 
             if (reference.Relationship != null)
             {
@@ -91,7 +92,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
         public void VisitOppositeReferenceSymbol(OppositeReferenceSymbol reference)
         {
             var parent = reference.Parent as ElementSymbol;
-            var domain = parent.Domain;
+            var domain = CurrentDomain;
 
             if (reference.Definition.Source == null)
             {

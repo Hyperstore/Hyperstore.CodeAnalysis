@@ -44,7 +44,7 @@ namespace Hyperstore.CodeAnalysis.Editor.AutoComplete
                     string textToInsert = null;
 
                     if (typedChar.Equals('{'))
-                        textToInsert = "\r\n\t}";
+                        textToInsert = "}";
                     if (typedChar.Equals('"'))
                         textToInsert = "\"";
 

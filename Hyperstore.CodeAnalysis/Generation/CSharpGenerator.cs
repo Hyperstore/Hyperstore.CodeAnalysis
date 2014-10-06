@@ -58,11 +58,11 @@ namespace Hyperstore.CodeAnalysis.Generation
 
         public void GenerateCode(IDomainSymbol domain)
         {
-            if (domain == null)
+            if (domain == null || domain.Skip)
                 return;
 
             Domain = domain;
-            var elements = domain.Elements.Where(e => !e.HasAttribute("IgnoreGeneration"));
+            var elements = domain.Elements.Where(e => !e.Skip);
 
             if (elements.Count() > 0)
             {
@@ -78,11 +78,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                         {
                             if (constraint.Kind == ConstraintKind.Check)
                             {
-                                ctx.WriteLine(3, "{0}.AddImplicitConstraint<{3}>( {1}, \"{2}\"){4}.Create();", clazz.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, clazz.Name, constraint.AsError ? String.Empty : ".AsWarning()");
+                                ctx.WriteLine(3, "{0}.AddImplicitConstraint<{3}>( {1}, \"{2}\"){4}.Register();", clazz.AsDefinitionVariable(Domain), constraint.Condition.Script, constraint.Message, clazz.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                             }
                             else if (constraint.Kind == ConstraintKind.Validate)
                             {
-                                ctx.WriteLine(3, "{0}.AddConstraint<{3}>( {1}, \"{2}\"){4}.Create();", clazz.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, clazz.Name, constraint.AsError ? String.Empty : ".AsWarning()");
+                                ctx.WriteLine(3, "{0}.AddConstraint<{3}>( {1}, \"{2}\"){4}.Register();", clazz.AsDefinitionVariable(Domain), constraint.Condition.Script, constraint.Message, clazz.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                             }
                         }
                     }
@@ -105,12 +105,10 @@ namespace Hyperstore.CodeAnalysis.Generation
                 ctx.WriteLine(1, "{{");
                 ctx.WriteLine(2, "public {0}Definition() : this(\"{1}\", DomainBehavior.Standard)", domain.Name, domain.Namespace);
                 ctx.WriteLine(2, "{{ }}");
-                ctx.WriteLine(1, "}}");
+                ctx.WriteLine(2, "public {0}Definition(ISchemaDefinition desc) : this(\"{1}\", DomainBehavior.Standard, desc)", domain.Name, domain.Namespace);
+                ctx.WriteLine(2, "{{ }}");
                 ctx.WriteLine();
-
-                ctx.WriteLine(1, "public partial class {0}Definition : Abstract{0}Definition", domain.Name);
-                ctx.WriteLine(1, "{{");
-                ctx.WriteLine(2, "public {0}Definition(string name, DomainBehavior behavior=DomainBehavior.Standard) : base(name, behavior{1})", domain.Name, observable);
+                ctx.WriteLine(2, "public {0}Definition(string name, DomainBehavior behavior=DomainBehavior.Standard, ISchemaDefinition desc=null) : base(name, behavior{1}, desc)", domain.Name, observable);
                 ctx.WriteLine(2, "{{ }}");
                 ctx.WriteLine(1, "}}");
                 ctx.WriteLine();
@@ -118,12 +116,30 @@ namespace Hyperstore.CodeAnalysis.Generation
                 ctx.WriteLine(1, "public abstract class Abstract{0}Definition : SchemaDefinition", domain.Name);
                 ctx.WriteLine(1, "{{");
 
-                ctx.WriteLine(2, "protected Abstract{0}Definition(string name, DomainBehavior behavior) : base(name, behavior)", domain.Name);
+                ctx.WriteLine(2, "protected Abstract{0}Definition(string name, DomainBehavior behavior, ISchemaDefinition desc=null) : base(name, behavior, desc)", domain.Name);
                 ctx.WriteLine(2, "{{}}");
                 ctx.WriteLine();
 
                 using (ctx.Push(GenerationScope.MetadataDefinitionBegin))
                 {
+                    if (domain.ExtendedDomainPath != null || domain.Usings.Any())
+                    {
+                        ctx.WriteLine();
+                        ctx.WriteLine(2, "protected override global::System.Collections.Generic.IEnumerable<ISchemaDefinition> GetDependentSchemas()");
+                        ctx.WriteLine(2, "{{");
+                        if (domain.ExtendedDomainPath != null)
+                        {
+                            var x = ctx.Compilation.ResolveDomain(domain, domain.ExtendedDomainPath);
+                            ctx.WriteLine(3, "yield return new {0}Definition(this);", x.QualifiedName);
+                        }
+                        foreach (var uses in domain.Usings)
+                        {
+                            var x = ctx.Compilation.ResolveDomain(domain, uses.DomainUri);
+                            ctx.WriteLine(3, "yield return new {0}Definition(this);", x.QualifiedName);
+                        }
+                        ctx.WriteLine(2, "}}");
+                    }
+                    ctx.WriteLine();
                     ctx.WriteLine();
                     ctx.WriteLine(2, "protected override void DefineSchema(ISchema schema)");
                     ctx.WriteLine(2, "{{");
@@ -144,24 +160,26 @@ namespace Hyperstore.CodeAnalysis.Generation
                     GenerateCode(child);
                 }
 
+                var set = new HashSet<IElementSymbol>();
                 // D'abord les classes
-                foreach (var n in elements.OfType<EntitySymbol>().Where(c => !c.HasGeneratedClassInheritance))
+                foreach (var n in elements.OfType<EntitySymbol>().Where(c => !c.Skip))
                 {
-                    GenerateClassCode(n);
+                    GenerateClassCode(n, set);
                 }
 
+                set = new HashSet<IElementSymbol>();
                 // Puis les relations
-                foreach (var n in elements.OfType<RelationshipSymbol>().Where(c => !c.HasGeneratedClassInheritance))
+                foreach (var n in elements.OfType<RelationshipSymbol>().Where(c => !c.Skip))
                 {
-                    GenerateClassCode(n);
+                    GenerateClassCode(n, set);
                 }
 
-                foreach (var n in elements.OfType<IEnumSymbol>())
+                foreach (var n in elements.OfType<IEnumSymbol>().Where(e => !e.Skip))
                 {
                     GenerateCode(n);
                 }
 
-                foreach (var c in Domain.Commands.Where(e => !e.HasAttribute("IgnoreGeneration")))
+                foreach (var c in Domain.Commands.Where(e => !e.Skip))
                 {
                     GenerateCode(c);
                 }
@@ -195,7 +213,7 @@ namespace Hyperstore.CodeAnalysis.Generation
             {
                 using (ctx.Push(GenerationScope.Begin))
                 {
-                    ctx.WriteLine(2, "public static {0}Schema {0}Schema {{ get; protected set; }}", valueObject.Name);
+                    ctx.WriteLine(2, "public {0}Schema {0}Schema {{ get; protected set; }}", valueObject.Name);
                 }
 
                 ctx.WriteLine(3, "{0}Schema = new {0}Schema(schema);", valueObject.Name);
@@ -232,13 +250,13 @@ namespace Hyperstore.CodeAnalysis.Generation
                 ctx.WriteLine(2, "}}");
                 ctx.WriteLine();
 
-                ctx.WriteLine(2, "public void ExecuteConstraint(string value, global::Hyperstore.Modeling.Metadata.Constraints.ConstraintContext ctx)");
+                ctx.WriteLine(2, "public void ExecuteConstraint({0} value, {0} oldValue, global::Hyperstore.Modeling.Metadata.Constraints.ConstraintContext ctx)", type.FullName);
                 ctx.WriteLine(2, "{{");
                 ctx.WriteLine(3, "Func<{0}, bool> condition;", type.FullName);
 
                 foreach (var constraint in valueObject.Constraints.Where(c => c.Kind == ConstraintKind.Check))
                 {
-                    WriteConstraint(constraint);
+                    WriteConstraint(3, constraint);
                 }
 
                 if (hasValidationConstraints)
@@ -247,7 +265,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                     ctx.WriteLine(3, "{{");
                     foreach (var constraint in valueObject.Constraints.Where(c => c.Kind == ConstraintKind.Validate))
                     {
-                        WriteConstraint(constraint);
+                        WriteConstraint(4, constraint);
                     }
                     ctx.WriteLine(3, "}}");
                     ctx.WriteLine(2, "}}");
@@ -296,26 +314,28 @@ namespace Hyperstore.CodeAnalysis.Generation
             return type.Alias;
         }
 
-        private void WriteConstraint(IConstraintSymbol constraint)
+        private void WriteConstraint(int indent, IConstraintSymbol constraint)
         {
-            ctx.WriteLine(4, "condition = {0};", constraint.Condition.Script);
-            ctx.WriteLine(4, "if( condition(value) == false )");
-            ctx.WriteLine(4, "{{");
-            ctx.WriteLine(5, "ctx.Create{0}Message(\"{1}\");", constraint.AsError ? "Error" : "Warning", constraint.Message);
-            ctx.WriteLine(4, "}}");
+            ctx.WriteLine(indent, "condition = {0};", constraint.Condition.Script);
+            ctx.WriteLine(indent, "if( condition(value) == false )");
+            ctx.WriteLine(indent, "{{");
+            ctx.WriteLine(indent + 1, "ctx.Create{0}Message(\"{1}\");", constraint.AsError ? "Error" : "Warning", constraint.Message);
+            ctx.WriteLine(indent, "}}");
         }
 
-        private void GenerateClassCode(IElementSymbol n)
+        private void GenerateClassCode(IElementSymbol n, HashSet<IElementSymbol> set)
         {
-            if (n == null) // La classe dérivée ne fait pas partie de ce domaine
+            if (n == null) // External domain
                 return;
 
-            GenerateCode(n);
+            if (!set.Add(n))  // Already generated
+                return;
 
-            foreach (var derived in n.DerivedElements)
-            {
-                GenerateClassCode(derived);
-            }
+            // First the entity the current entity inherit from
+            if (n.SuperType != null && n.SuperType.Domain == n.Domain)
+                GenerateClassCode(n.SuperType as IElementSymbol, set);
+
+            GenerateCode(n);
         }
 
         private void GenerateCode(IElementSymbol clazz)
@@ -327,7 +347,7 @@ namespace Hyperstore.CodeAnalysis.Generation
 
             using (ctx.Push(GenerationScope.MetadataDefinitionEnd))
             {
-                foreach (var prop in clazz.Properties)
+                foreach (var prop in clazz.Properties.Where(p => !p.Skip))
                 {
                     if (prop.PropertyType is RelationshipSymbol || prop.IsCalculatedProperty)
                         continue;
@@ -339,15 +359,15 @@ namespace Hyperstore.CodeAnalysis.Generation
                     var ext = prop.PropertyType as ExternSymbol;
                     if (ext != null && ext.Kind != ExternalKind.Primitive && ext.Kind != ExternalKind.Enum)
                     {
-                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(), prop.PropertyType.Name, ext.Alias, defaultValue);
+                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(Domain), prop.PropertyType.Name, ext.Alias, defaultValue);
                     }
                     else if (prop.PropertyType is IValueObjectSymbol)
                     {
-                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(), prop.PropertyType.Name, prop.PropertyType.Name, defaultValue);
+                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty(\"{1}\",{2}Schema{3});", clazz.AsDefinitionVariable(Domain), prop.PropertyType.Name, prop.PropertyType.Name, defaultValue);
                     }
-                    else 
+                    else
                     {
-                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty<{1}>(\"{2}\"{3});", clazz.AsDefinitionVariable(), prop.PropertyType.AsFullName(), prop.Name, defaultValue);
+                        ctx.WriteLine(3, "((ISchemaElement){0}).DefineProperty<{1}>(\"{2}\"{3});", clazz.AsDefinitionVariable(Domain), prop.PropertyType.AsFullName(), prop.Name, defaultValue);
                     }
                 }
             }
@@ -819,7 +839,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                         ctx.WriteLine(2, "//    }}");
                         ctx.WriteLine(2, "//}}");
                     }
-                    ctx.WriteLine(2, "public static {0}Schema {0}Schema {{get;protected set;}}", ext.Alias);
+                    ctx.WriteLine(2, "public {0}Schema {0}Schema {{get;protected set;}}", ext.Alias);
                 }
 
                 ctx.WriteLine(3, "{0}Schema = new {0}Schema(schema);", ext.Alias);
@@ -899,12 +919,12 @@ namespace Hyperstore.CodeAnalysis.Generation
                 var indexName = indexAttr.Arguments.Count() == 2 ? indexAttr.Arguments.Skip(1).First() : String.Format("{0}_{1}_IX", parent.Name, prop.Name);
                 using (ctx.Push(GenerationScope.MetadataOnBeforeLoad))
                 {
-                    ctx.WriteLine(3, "{1} = schema.Indexes.CreateIndex({0}, \"{1}\", {2}, \"{3}\");", parent.AsDefinitionVariable(), indexName, indexAttr.Arguments.First().ToLower(), prop.Name);
+                    ctx.WriteLine(3, "{1} = schema.Indexes.CreateIndex({0}, \"{1}\", {2}, \"{3}\");", parent.AsDefinitionVariable(Domain), indexName, indexAttr.Arguments.First().ToLower(), prop.Name);
                 }
 
                 using (ctx.Push(GenerationScope.Begin))
                 {
-                    ctx.WriteLine(2, "public static IIndex {0} {{ get; protected set; }}", indexName);
+                    ctx.WriteLine(2, "public IIndex {0} {{ get; protected set; }}", indexName);
                 }
             }
 
@@ -916,11 +936,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                     {
                         if (constraint.Kind == ConstraintKind.Check)
                         {
-                            ctx.WriteLine(3, "{0}.AddImplicitConstraint<{4}>({1}, \"{2}\", \"{3}\"){5}.Create();", parent.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name, constraint.AsError ? String.Empty : ".AsWarning()");
+                            ctx.WriteLine(3, "{0}.AddImplicitConstraint<{4}>({1}, \"{2}\", \"{3}\"){5}.Register();", parent.AsDefinitionVariable(Domain), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                         }
                         else if (constraint.Kind == ConstraintKind.Validate)
                         {
-                            ctx.WriteLine(3, "{0}.AddConstraint<{4}>({1}, \"{2}\", \"{3}\"){5}.Create();", parent.AsDefinitionVariable(), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name, constraint.AsError ? String.Empty : ".AsWarning()");
+                            ctx.WriteLine(3, "{0}.AddConstraint<{4}>({1}, \"{2}\", \"{3}\"){5}.Register();", parent.AsDefinitionVariable(Domain), constraint.Condition.Script, constraint.Message, prop.Name, parent.Name, constraint.AsError ? String.Empty : ".AsWarning()");
                         }
                     }
                 }
@@ -932,7 +952,7 @@ namespace Hyperstore.CodeAnalysis.Generation
             var super = ", null";
             if (clazz.SuperType != null)
             {
-                super = ", " + clazz.SuperType.AsDefinitionVariable();
+                super = ", " + clazz.SuperType.AsDefinitionVariable(Domain);
             }
 
             if (clazz is IRelationshipSymbol)
@@ -944,20 +964,20 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                 if (clazz is IVirtualRelationshipSymbol || Domain.IsDynamic)
                 {
-                    ctx.WriteLine(3, "{0} = new SchemaRelationship(\"{0}\", {1}, {2}, Cardinality.{3}, {4}, null{5}{6});", rel.Name, rel.Definition.Source.AsDefinitionVariable(), rel.Definition.End.AsDefinitionVariable(), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false", startPropertyName, endPropertyName);
+                    ctx.WriteLine(3, "{0} = new SchemaRelationship(\"{0}\", {1}, {2}, Cardinality.{3}, {4}, null{5}{6});", rel.Name, rel.Definition.Source.AsDefinitionVariable(Domain), rel.Definition.End.AsDefinitionVariable(Domain), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false", startPropertyName, endPropertyName);
 
                     using (ctx.Push(GenerationScope.Begin))
                     {
-                        ctx.WriteLine(2, "public static ISchemaRelationship {0} {{ get; protected set; }}", rel.Name);
+                        ctx.WriteLine(2, "public ISchemaRelationship {0} {{ get; protected set; }}", rel.Name);
                     }
                 }
                 else
                 {
-                    ctx.WriteLine(3, "{0} = new SchemaRelationship<{0}>({1}, {2}, Cardinality.{3}, {4}{5}{6}{7});", rel.Name, rel.Definition.Source.AsDefinitionVariable(), rel.Definition.End.AsDefinitionVariable(), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false", super, startPropertyName, endPropertyName);
+                    ctx.WriteLine(3, "{0} = new SchemaRelationship<{0}>({1}, {2}, Cardinality.{3}, {4}{5}{6}{7});", rel.Name, rel.Definition.Source.AsDefinitionVariable(Domain), rel.Definition.End.AsDefinitionVariable(Domain), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false", super, startPropertyName, endPropertyName);
 
                     using (ctx.Push(GenerationScope.Begin))
                     {
-                        ctx.WriteLine(2, "public static SchemaRelationship<{0}> {0} {{ get; protected set; }}", rel.Name);
+                        ctx.WriteLine(2, "public SchemaRelationship<{0}> {0} {{ get; protected set; }}", rel.Name);
                     }
                 }
             }
@@ -976,11 +996,11 @@ namespace Hyperstore.CodeAnalysis.Generation
                 {
                     if (Domain.IsDynamic)
                     {
-                        ctx.WriteLine(2, "public static SchemaEntity {0} {{ get; protected set; }}", clazz.Name);
+                        ctx.WriteLine(2, "public SchemaEntity {0} {{ get; protected set; }}", clazz.Name);
                     }
                     else
                     {
-                        ctx.WriteLine(2, "public static SchemaEntity<{0}> {0} {{ get; protected set; }}", clazz.Name);
+                        ctx.WriteLine(2, "public SchemaEntity<{0}> {0} {{ get; protected set; }}", clazz.Name);
                     }
                 }
             }

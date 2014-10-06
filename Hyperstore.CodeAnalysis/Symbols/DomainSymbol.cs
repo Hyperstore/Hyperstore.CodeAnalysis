@@ -11,6 +11,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
     {
         private readonly List<UsingSymbol> _usings = new List<UsingSymbol>();
         public string QualifiedName { get; private set; }
+        public QualifiedNameSyntax QualifiedNameSyntax { get; private set; }
 
         public override DomainSymbol Domain
         {
@@ -19,6 +20,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
                 return this;
             }
         }
+
         public string Namespace
         {
             get;
@@ -39,7 +41,8 @@ namespace Hyperstore.CodeAnalysis.Symbols
 
         internal Dictionary<string, TypeSymbol> Members { get; set; }
 
-        internal DomainSymbol() : base( null, null, null)
+        internal DomainSymbol()
+            : base(null, null, null)
         {
             Name = "Primitives";
         }
@@ -49,6 +52,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
         {
             Members = new Dictionary<string, TypeSymbol>();
             QualifiedName = qname.FullName;
+            QualifiedNameSyntax = qname;
             Namespace = String.Empty;
             var name = qname.FullName;
             Name = name;
@@ -111,6 +115,8 @@ namespace Hyperstore.CodeAnalysis.Symbols
         }
 
         public SyntaxToken ExtendedDomainUri { get; set; }
+
+        public string ExtendedDomainPath { get { return ExtendedDomainUri != null ? ExtendedDomainUri.Text : null; } }
 
         public bool IsPartial { get { return ExtendedDomainUri != null; } }
     }

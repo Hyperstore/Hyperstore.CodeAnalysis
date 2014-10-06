@@ -25,9 +25,12 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
         protected RDTEvents(ITextBuffer buffer)
         {
             ErrorsWindow = new ErrorListWindow(new ServiceProvider(GlobalServiceProvider), "Hyperstore");
-            var doc = buffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
-            _filePath = doc.FilePath;
-            InitializeRunningDocumentTable();
+            ITextDocument doc;
+            if (buffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out doc))
+            {
+                _filePath = doc.FilePath;
+                InitializeRunningDocumentTable();
+            }
         }
 
         #region RDT events

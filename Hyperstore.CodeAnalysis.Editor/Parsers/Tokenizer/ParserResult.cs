@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hyperstore.CodeAnalysis.Editor.Parsers
+namespace Hyperstore.CodeAnalysis.Editor.Parser
 {
     enum DefinitionState
     {
@@ -41,7 +41,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parsers
             var state = DefinitionState.None;
 
             var prv = currentToken;
-            while (prv != null && (prv.Kind != TokenKind.Separator || prv.Value == ":"))
+            while (prv != null && (prv.Kind != TokenKind.Separator || prv.Value == ":" || prv.Value == "("))
             {
                 if (prv.Value == "def")
                 {

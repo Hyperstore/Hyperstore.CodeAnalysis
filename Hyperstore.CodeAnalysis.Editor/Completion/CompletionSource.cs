@@ -7,11 +7,12 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.TextManager.Interop;
-using Hyperstore.CodeAnalysis.Editor.Parsers;
+using Hyperstore.CodeAnalysis.Editor.Parser;
 using System.Threading.Tasks;
 using Hyperstore.CodeAnalysis.Editor.Parser;
 using Hyperstore.CodeAnalysis.Compilation;
 using Hyperstore.CodeAnalysis.Symbols;
+using System.Text;
 
 namespace Hyperstore.CodeAnalysis.Editor.Completion
 {
@@ -20,43 +21,48 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
     /// </summary> 
     internal class CompletionSource : ICompletionSource
     {
-        internal static string CompletionSetName = "IronPython Completion";
+        internal static string CompletionSetName = "Hyperstore Completion";
 
         private ITextBuffer textBuffer;
         private IGlyphService glyphService;
         private IDomainSymbol _domain;
         private HyperstoreCompilation _compilation;
         private readonly HyperstoreTokenizer _tokenizer;
+        private readonly SemanticBackgroundParser _backgroundParser;
 
         internal CompletionSource(ITextBuffer textBuffer, IGlyphService glyphService)
         {
             this.textBuffer = textBuffer;
             this.glyphService = glyphService;
-            var backgroundParser = textBuffer.Properties.GetOrCreateSingletonProperty(() => new SemanticBackgroundParser(textBuffer, TaskScheduler.Current));
-            _domain = backgroundParser.LastValidDomain;
-            _compilation = backgroundParser.Compilation;
+            _backgroundParser = textBuffer.Properties.GetOrCreateSingletonProperty(() => new SemanticBackgroundParser(textBuffer, TaskScheduler.Current));
+            _compilation = _backgroundParser.Compilation;
             _tokenizer = textBuffer.Properties.GetOrCreateSingletonProperty<HyperstoreTokenizer>(() => new HyperstoreTokenizer());
         }
 
-        // TODO to implement in the tokenizer each token containing its next potential tokens
+        // TODO implement in the tokenizer : each token contains its next potential tokens
         private IEnumerable<Declaration> BuildCompletionNodes(ITrackingPoint position, ITextSnapshot snapshot, char currentKey)
         {
             _tokenizer.EnsuresReady(snapshot);
+
             var regions = _tokenizer.Regions;
             var tokens = _tokenizer.Tokens;
+
+            _domain = _backgroundParser.LastValidDomain;
 
             var declarations = new List<Declaration>();
             var span = new global::Microsoft.VisualStudio.Text.Span(position.GetPosition(snapshot), 1);
 
             var region = regions.FirstOrDefault(r => span.OverlapsWith(r.Span.GetSpan(snapshot)));
             var token = tokens.LastOrDefault(t => t.Span.GetSpan(snapshot).Start < span.Start);
+            if (token != null && token.Kind == TokenKind.Comment)
+                return declarations;
 
             bool beingEditIdentifier = !Char.IsWhiteSpace(currentKey);
             if (beingEditIdentifier && token != null && token.Kind != TokenKind.CSharpCode)
             {
                 token = tokens.GetPreviousToken(token);
             }
-            
+
             if (region == null)
             {
                 if (token == null)
@@ -80,9 +86,28 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                             declarations.Add(new Declaration { Title = "interface", Type = DeclarationType.Keyword });
                             return declarations;
 
+                        case "relationship":
+                            if (_domain != null)
+                            {
+                                foreach (var elem in _domain.Elements.OfType<IVirtualRelationshipSymbol>())
+                                {
+                                    var insertionText = new StringBuilder(elem.Name);
+                                    insertionText.Append(" (");
+                                    insertionText.Append(elem.Definition.Source.Name);
+                                    if ((elem.Definition.Cardinality & RelationshipCardinality.ManyToOne) == RelationshipCardinality.ManyToOne)
+                                        insertionText.Append("*");
+                                    insertionText.Append(" ");
+                                    insertionText.Append(elem.Definition.IsEmbedded ? "=> " : "-> ");
+                                    insertionText.Append(elem.Definition.End.Name);
+                                    if ((elem.Definition.Cardinality & RelationshipCardinality.OneToMany) == RelationshipCardinality.OneToMany)
+                                        insertionText.Append("*");
+                                    insertionText.Append(" ) { }");
+                                    declarations.Add(new Declaration { Title = elem.Name, Type = DeclarationType.Type, InsertionText = insertionText.ToString() });
+                                }
+                            }
+                            return declarations;
                         case "domain":
                         case "entity":
-                        case "relationship":
                         case "enum":
                         case "uses":
                         case "as":
@@ -90,6 +115,9 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         case "select":
                         case "where":
                         case "compute":
+                            return declarations;
+                        case "(":
+                            BuildTypeDeclarations(declarations, forReference:true);
                             return declarations;
                     }
 
@@ -100,7 +128,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         declarations.Add(new Declaration { Title = "def", Type = DeclarationType.Keyword });
                         declarations.Add(new Declaration { Title = "extern", Type = DeclarationType.Keyword });
                         declarations.Add(new Declaration { Title = "uses", Type = DeclarationType.Keyword });
-                        return declarations;                        
+                        return declarations;
                     }
 
                     if (token.Kind != TokenKind.Keyword)
@@ -108,6 +136,10 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         if (definitionState == DefinitionState.Extern || definitionState == DefinitionState.Uses)
                         {
                             declarations.Add(new Declaration { Title = "as", Type = DeclarationType.Keyword });
+                        }
+                        else if( definitionState == DefinitionState.Domain)
+                        {
+                            declarations.Add(new Declaration { Title = "extends", Type = DeclarationType.Keyword });
                         }
                         else if (definitionState != DefinitionState.Enum && definitionState != DefinitionState.ValueObject)
                         {
@@ -119,7 +151,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         return declarations;
                     }
 
-                    if (definitionState == DefinitionState.Compute)
+                    if (definitionState == DefinitionState.Compute || definitionState == DefinitionState.Domain)
                     {
                         return declarations;
                     }
@@ -129,14 +161,14 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         if (token.Value == "implements")
                             BuildInterfaceDeclarations(declarations);
                         else
-                            BuildTypeDeclarations(declarations, true);
+                            BuildTypeDeclarations(declarations);
                     }
                     return declarations;
                 }
 
 
             }
-            else
+            else if (region.Type != RegionType.Comment)
             {
                 if (token != null)
                 {
@@ -145,7 +177,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         var definitionState = tokens.IsInDefinition(token);
                         if (definitionState != DefinitionState.None)
                         {
-                            if( definitionState == DefinitionState.Constraint )
+                            if (definitionState == DefinitionState.Constraint)
                             {
                                 if (token.Value == "check" || token.Value == "validate")
                                 {
@@ -162,8 +194,8 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                                 }
                                 return declarations;
                             }
-                            
-                            if( definitionState == DefinitionState.Compute )
+
+                            if (definitionState == DefinitionState.Compute)
                             {
                                 return declarations;
                             }
@@ -187,7 +219,10 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                                 if (token.Value == "implements")
                                     BuildInterfaceDeclarations(declarations);
                                 else
-                                    BuildTypeDeclarations(declarations, true);
+                                {
+                                    var tokenIdentifier = tokens.GetPreviousToken(token);
+                                    BuildTypeDeclarations(declarations, tokenIdentifier != null ? tokenIdentifier.Value : null);
+                                }
                             }
                         }
                         else if (_domain != null)
@@ -202,22 +237,25 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                                     declarations.Add(new Declaration { Title = "=", Type = DeclarationType.Keyword });
                                     declarations.Add(new Declaration { Title = "check", Type = DeclarationType.Keyword });
                                     declarations.Add(new Declaration { Title = "validate", Type = DeclarationType.Keyword });
+                                    declarations.Add(new Declaration { Title = "compute", Type = DeclarationType.Keyword });
                                 }
                             }
                             else
                             {
+                                bool forReference = true;
                                 switch (token.Value)
                                 {
                                     case ":":
                                         var prv = tokens.GetPreviousToken(token);
                                         if (prv == null || prv.Kind == TokenKind.String)
                                             break;
+                                        forReference = false;
                                         goto case "=>";
                                     case "=>":
                                     case "<-":
                                     case "->":
                                     case "<=":
-                                        BuildTypeDeclarations(declarations, false);
+                                        BuildTypeDeclarations(declarations, forReference: forReference);
                                         break;
                                 }
                             }
@@ -236,9 +274,9 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             return declarations;
         }
 
-        private void BuildInterfaceDeclarations(List<Declaration> declarations, IDomainSymbol domain = null, string alias = null)
+        private void BuildInterfaceDeclarations(List<Declaration> declarations, IDomainSymbol domain = null, string alias = null, bool recursive = true)
         {
-            foreach (var elem in (domain ?? _domain).Elements)
+            foreach (var elem in (domain ?? _domain).Externals)
             {
                 if (elem is IExternSymbol && ((IExternSymbol)elem).Kind == ExternalKind.Interface)
                 {
@@ -246,40 +284,73 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                 }
             }
 
-            if (alias != null)
+            if (!recursive)
                 return;
 
-            foreach (var uses in (domain ?? _domain).Usings)
+            if (_domain.ExtendedDomainPath != null)
             {
-                var domainUsed = _compilation.ResolveDomain(uses);
+                var extendedDomain = _compilation.ResolveDomain(_domain, _domain.ExtendedDomainPath);
+                if (extendedDomain != null)
+                    BuildInterfaceDeclarations(declarations, extendedDomain.Domain, null, false);
+            }
+
+            foreach (var uses in _domain.Usings)
+            {
+                var domainUsed = _compilation.ResolveDomain(uses.Domain, uses.DomainUri);
                 if (domainUsed != null && domainUsed.Domain != null)
-                    BuildInterfaceDeclarations(declarations, domainUsed.Domain, uses.Name);
+                    BuildInterfaceDeclarations(declarations, domainUsed.Domain, uses.Name, false);
             }
         }
 
-        private void BuildTypeDeclarations(List<Declaration> declarations, bool forExtends, IDomainSymbol domain = null, string alias = null)
+        private void BuildTypeDeclarations(List<Declaration> declarations, string tokenToExtends = null, IDomainSymbol domain = null, string alias = null, bool forReference = false, bool recursive=true)
         {
-            foreach (var elem in (domain ?? _domain).Elements)
+            var source = domain ?? _domain;
+
+            var query = source.Elements.Cast<ITypeSymbol>().Concat(source.Externals);
+
+            if (tokenToExtends == null && !forReference)
+                query = query.Concat(source.ValueObjects);
+
+            foreach (var elem in query)
             {
+                if (elem is IVirtualRelationshipSymbol)
+                    continue;
+
                 if (elem is IEntitySymbol || elem is IRelationshipSymbol || elem is IExternSymbol || elem is IValueObjectSymbol)
                 {
-                    if (forExtends && elem is IValueObjectSymbol)
+                    if (elem is IEntitySymbol && !forReference && tokenToExtends == null)
                         continue;
 
-                    if (forExtends && elem is IExternSymbol)
+                    if (tokenToExtends != null)
+                    {
+                        if (elem.Name == tokenToExtends)
+                            continue;
+                    }
+
+                    if (elem is IExternSymbol)
                     {
                         var ext = elem as IExternSymbol;
-                        if (ext.Kind != ExternalKind.Normal)
+                        if (ext.Kind == ExternalKind.Interface)
+                            continue;
+
+                        if (tokenToExtends != null && ext.Kind != ExternalKind.Normal)
                             continue;
                     }
                     declarations.Add(new Declaration { Title = alias == null ? elem.Name : String.Format("{0}.{1}", alias, elem.Name), Type = DeclarationType.Type });
                 }
             }
 
-            if (alias != null)
+            if (!recursive)
                 return;
 
-            if (!forExtends)
+            if (source.ExtendedDomainPath != null)
+            {
+                var extendedDomain = _compilation.ResolveDomain(_domain, source.ExtendedDomainPath);
+                if (extendedDomain != null )
+                    BuildTypeDeclarations(declarations, tokenToExtends, extendedDomain.Domain, null, forReference, false); 
+            }
+
+            if (tokenToExtends == null && !forReference)
             {
                 foreach (var elem in _compilation.GetPrimitives())
                 {
@@ -287,11 +358,11 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                 }
             }
 
-            foreach (var uses in (domain ?? _domain).Usings)
+            foreach (var uses in _domain.Usings)
             {
-                var domainUsed = _compilation.ResolveDomain(uses);
-                if (domainUsed != null && domainUsed.Domain != null)
-                    BuildTypeDeclarations(declarations, forExtends, domainUsed.Domain, uses.Name);
+                var domainUsed = _compilation.ResolveDomain(_domain, uses.DomainUri);
+                if (domainUsed != null )
+                    BuildTypeDeclarations(declarations, tokenToExtends, domainUsed.Domain, uses.Name, forReference, false);
             }
         }
 

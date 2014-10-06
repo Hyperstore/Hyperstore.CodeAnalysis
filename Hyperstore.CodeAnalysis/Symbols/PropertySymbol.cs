@@ -21,7 +21,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
         public CSharpCodeSymbol SelectClause { get; internal set; }
         public CSharpCodeSymbol DefaultValue { get; internal set; }
 
-        internal PropertySymbol(HyperstoreCompilation compilation, Hyperstore.CodeAnalysis.Syntax.SyntaxNode node, Hyperstore.CodeAnalysis.Symbols.Symbol parent, Hyperstore.CodeAnalysis.Syntax.SyntaxToken propertyType, SyntaxToken name)
+        internal PropertySymbol(HyperstoreCompilation compilation, Hyperstore.CodeAnalysis.Syntax.SyntaxNode node, Hyperstore.CodeAnalysis.Symbols.Symbol parent, Hyperstore.CodeAnalysis.Syntax.QualifiedNameSyntax propertyType, SyntaxToken name)
             : base(node, parent, name)
         {
             Constraints = new List<ConstraintSymbol>();
