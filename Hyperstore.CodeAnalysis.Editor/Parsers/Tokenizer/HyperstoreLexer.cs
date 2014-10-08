@@ -157,6 +157,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
             return r;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl( System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private TokenInfo NextTokenSafe()
         {
             try

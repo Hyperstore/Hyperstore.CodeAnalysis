@@ -391,6 +391,9 @@ namespace Hyperstore.CodeAnalysis.Generation
                 if (Domain.IsObservable && !Domain.IsDynamic)
                     extends.Append(", System.ComponentModel.INotifyPropertyChanged");
 
+                if( clazz.Properties.Any(p=>p.Name == "Name" && p.PropertyType.Name=="string"))
+                    extends.Append(", Hyperstore.Modeling.INamedElement");
+
                 foreach (var att in clazz.Attributes.Where(a => a.Name == "attribute"))
                 {
                     ctx.WriteLine(1, "[{0}]", att.Arguments.First().Replace(@"\""", "\""));

@@ -217,166 +217,171 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
             // Handle VS commands to support code snippets 
-
-            if (pguidCmdGroup == VSConstants.VSStd2K)
+            try
             {
-                //if (nCmdID == (uint)VSConstants.VSStd2KCmdID.INSERTSNIPPET || nCmdID == (uint)VSConstants.VSStd2KCmdID.SURROUNDWITH) 
-                //{ 
-                //    IVsTextManager2 textManager = (IVsTextManager2)this.serviceProvider.GetService(typeof(SVsTextManager)); 
-                //    IVsExpansionManager expansionManager; 
-                //    if (VSConstants.S_OK == textManager.GetExpansionManager(out expansionManager)) 
-                //    { 
-                //        expansionManager.InvokeInsertionUI( 
-                //            vsTextView, 
-                //            this, 
-                //            Constants.IronPythonLanguageServiceGuid, 
-                //            null, 
-                //            0, 
-                //            1, 
-                //            null, 
-                //            0, 
-                //            1, 
-                //            "Insert Snippet", 
-                //            string.Empty); 
-                //    } 
-
-                //    return VSConstants.S_OK; 
-                //} 
-
-                //if (this.expansionSession != null) 
-                //{ 
-                //    // Handle VS Expansion (Code Snippets) keys 
-                //    if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.TAB)) 
-                //    { 
-                //        if (expansionSession.GoToNextExpansionField(0) == VSConstants.S_OK) 
-                //            return VSConstants.S_OK; 
-                //    } 
-                //    else if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.BACKTAB)) 
-                //    { 
-                //        if (expansionSession.GoToPreviousExpansionField() == VSConstants.S_OK) 
-                //            return VSConstants.S_OK; 
-                //    } 
-                //    else if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.RETURN || nCmdID == (uint)VSConstants.VSStd2KCmdID.CANCEL)) 
-                //    { 
-                //        if (expansionSession.EndCurrentExpansion(0) == VSConstants.S_OK) 
-                //        { 
-                //            expansionSession = null; 
-
-                //            return VSConstants.S_OK; 
-                //        } 
-                //    } 
-                //} 
-
-                // Handle Edit.ListMembers or Edit.CompleteWord commands 
-                if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.SHOWMEMBERLIST || nCmdID == (uint)VSConstants.VSStd2KCmdID.COMPLETEWORD))
+                if (pguidCmdGroup == VSConstants.VSStd2K)
                 {
-                    if (activeSession != null)
+                    //if (nCmdID == (uint)VSConstants.VSStd2KCmdID.INSERTSNIPPET || nCmdID == (uint)VSConstants.VSStd2KCmdID.SURROUNDWITH) 
+                    //{ 
+                    //    IVsTextManager2 textManager = (IVsTextManager2)this.serviceProvider.GetService(typeof(SVsTextManager)); 
+                    //    IVsExpansionManager expansionManager; 
+                    //    if (VSConstants.S_OK == textManager.GetExpansionManager(out expansionManager)) 
+                    //    { 
+                    //        expansionManager.InvokeInsertionUI( 
+                    //            vsTextView, 
+                    //            this, 
+                    //            Constants.IronPythonLanguageServiceGuid, 
+                    //            null, 
+                    //            0, 
+                    //            1, 
+                    //            null, 
+                    //            0, 
+                    //            1, 
+                    //            "Insert Snippet", 
+                    //            string.Empty); 
+                    //    } 
+
+                    //    return VSConstants.S_OK; 
+                    //} 
+
+                    //if (this.expansionSession != null) 
+                    //{ 
+                    //    // Handle VS Expansion (Code Snippets) keys 
+                    //    if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.TAB)) 
+                    //    { 
+                    //        if (expansionSession.GoToNextExpansionField(0) == VSConstants.S_OK) 
+                    //            return VSConstants.S_OK; 
+                    //    } 
+                    //    else if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.BACKTAB)) 
+                    //    { 
+                    //        if (expansionSession.GoToPreviousExpansionField() == VSConstants.S_OK) 
+                    //            return VSConstants.S_OK; 
+                    //    } 
+                    //    else if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.RETURN || nCmdID == (uint)VSConstants.VSStd2KCmdID.CANCEL)) 
+                    //    { 
+                    //        if (expansionSession.EndCurrentExpansion(0) == VSConstants.S_OK) 
+                    //        { 
+                    //            expansionSession = null; 
+
+                    //            return VSConstants.S_OK; 
+                    //        } 
+                    //    } 
+                    //} 
+
+                    // Handle Edit.ListMembers or Edit.CompleteWord commands 
+                    if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.SHOWMEMBERLIST || nCmdID == (uint)VSConstants.VSStd2KCmdID.COMPLETEWORD))
                     {
-                        activeSession.Dismiss();
-                    }
-
-                    ShowCompletion(' ');
-
-                    return VSConstants.S_OK;
-                }
-
-                // Handle Enter/Tab commit keys 
-                if (activeSession != null && (nCmdID == (uint)VSConstants.VSStd2KCmdID.RETURN || nCmdID == (uint)VSConstants.VSStd2KCmdID.TAB))
-                {
-                    if (activeSession.SelectedCompletionSet.SelectionStatus.IsSelected)
-                        activeSession.Commit();
-                    else
-                        activeSession.Dismiss();
-
-                    return VSConstants.S_OK;
-                }
-
-                // Handle Code Snippets after pressing the Tab key without completion 
-                //if (activeSession == null && (nCmdID == (uint)VSConstants.VSStd2KCmdID.TAB)) 
-                //{ 
-                //    using (var systemState = new SystemState()) 
-                //    { 
-                //        // Get the current line text until the cursor 
-                //        var line = this.textView.GetTextViewLineContainingBufferPosition(this.textView.Caret.Position.BufferPosition); 
-                //        var text = this.textView.TextSnapshot.GetText(line.Start.Position, this.textView.Caret.Position.BufferPosition - line.Start.Position); 
-
-                //        // Create a tokenizer for the text 
-                //        var tokenizer = new Tokenizer(text.ToCharArray(), true, systemState, new CompilerContext(string.Empty, new QuietCompilerSink())); 
-
-                //        // Get the last token in the text 
-                //        Token currentToken, lastToken = null; 
-                //        while ((currentToken = tokenizer.Next()).Kind != TokenKind.NewLine) 
-                //        { 
-                //            lastToken = currentToken; 
-                //        } 
-
-                //        if (lastToken != null && lastToken.Kind != TokenKind.Constant) 
-                //        { 
-                //            var expansionManager = (IVsTextManager2)this.serviceProvider.GetService(typeof(SVsTextManager)); 
-                //            var snippetsEnumerator = new SnippetsEnumerator(expansionManager, Constants.IronPythonLanguageServiceGuid); 
-
-                //            // Search a snippet that matched the token text 
-                //            var expansion = snippetsEnumerator.FirstOrDefault(e => e.title == lastToken.Value.ToString()); 
-
-                //            if (expansion.title != null) 
-                //            { 
-                //                // Set the location where the snippet will be inserted 
-                //                int startLine, startColumn, endLine, endColumn; 
-
-                //                this.vsTextView.GetCaretPos(out startLine, out endColumn); 
-                //                startColumn = endColumn - expansion.title.Length; 
-                //                endLine = startLine; 
-
-                //                // Insert the snippet 
-                //                InsertCodeExpansion(expansion, startLine, startColumn, endLine, endColumn); 
-
-                //                return VSConstants.S_OK; 
-                //            } 
-                //        } 
-                //    } 
-                //} 
-
-                // Hanlde other keys 
-                if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.TYPECHAR))
-                {
-                    char typedChar = (char)(ushort)Marshal.GetObjectForNativeVariant(pvaIn);
-
-                    if (activeSession == null)
-                    {
-                        // Handle trigger keys 
-                        // Check if the typed char is a trigger 
-                        if (IsTriggerKey(typedChar))
+                        if (activeSession != null)
                         {
-                            var result = this.nextCommandTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-
-                            ShowCompletion(typedChar);
-
-                            return result;
+                            activeSession.Dismiss();
                         }
+
+                        ShowCompletion(' ');
+
+                        return VSConstants.S_OK;
                     }
-                    else
+
+                    // Handle Enter/Tab commit keys 
+                    if (activeSession != null && (nCmdID == (uint)VSConstants.VSStd2KCmdID.RETURN || nCmdID == (uint)VSConstants.VSStd2KCmdID.TAB))
                     {
-                        // Handle commit keys 
-                        // Check if the typed char is a commit key 
-                        if (IsCommitKey(typedChar))
+                        if (activeSession.SelectedCompletionSet.SelectionStatus.IsSelected)
+                            activeSession.Commit();
+                        else
+                            activeSession.Dismiss();
+
+                        return VSConstants.S_OK;
+                    }
+
+                    // Handle Code Snippets after pressing the Tab key without completion 
+                    //if (activeSession == null && (nCmdID == (uint)VSConstants.VSStd2KCmdID.TAB)) 
+                    //{ 
+                    //    using (var systemState = new SystemState()) 
+                    //    { 
+                    //        // Get the current line text until the cursor 
+                    //        var line = this.textView.GetTextViewLineContainingBufferPosition(this.textView.Caret.Position.BufferPosition); 
+                    //        var text = this.textView.TextSnapshot.GetText(line.Start.Position, this.textView.Caret.Position.BufferPosition - line.Start.Position); 
+
+                    //        // Create a tokenizer for the text 
+                    //        var tokenizer = new Tokenizer(text.ToCharArray(), true, systemState, new CompilerContext(string.Empty, new QuietCompilerSink())); 
+
+                    //        // Get the last token in the text 
+                    //        Token currentToken, lastToken = null; 
+                    //        while ((currentToken = tokenizer.Next()).Kind != TokenKind.NewLine) 
+                    //        { 
+                    //            lastToken = currentToken; 
+                    //        } 
+
+                    //        if (lastToken != null && lastToken.Kind != TokenKind.Constant) 
+                    //        { 
+                    //            var expansionManager = (IVsTextManager2)this.serviceProvider.GetService(typeof(SVsTextManager)); 
+                    //            var snippetsEnumerator = new SnippetsEnumerator(expansionManager, Constants.IronPythonLanguageServiceGuid); 
+
+                    //            // Search a snippet that matched the token text 
+                    //            var expansion = snippetsEnumerator.FirstOrDefault(e => e.title == lastToken.Value.ToString()); 
+
+                    //            if (expansion.title != null) 
+                    //            { 
+                    //                // Set the location where the snippet will be inserted 
+                    //                int startLine, startColumn, endLine, endColumn; 
+
+                    //                this.vsTextView.GetCaretPos(out startLine, out endColumn); 
+                    //                startColumn = endColumn - expansion.title.Length; 
+                    //                endLine = startLine; 
+
+                    //                // Insert the snippet 
+                    //                InsertCodeExpansion(expansion, startLine, startColumn, endLine, endColumn); 
+
+                    //                return VSConstants.S_OK; 
+                    //            } 
+                    //        } 
+                    //    } 
+                    //} 
+
+                    // Hanlde other keys 
+                    if ((nCmdID == (uint)VSConstants.VSStd2KCmdID.TYPECHAR))
+                    {
+                        char typedChar = (char)(ushort)Marshal.GetObjectForNativeVariant(pvaIn);
+
+                        if (activeSession == null)
                         {
-                            if (activeSession.SelectedCompletionSet.SelectionStatus.IsSelected)
-                                activeSession.Commit();
-                            else
-                                activeSession.Dismiss();
-
-                            var result = this.nextCommandTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-
-                            // Check we should trigger completion after comitting the previous session (for example, after typing dot '.') 
+                            // Handle trigger keys 
+                            // Check if the typed char is a trigger 
                             if (IsTriggerKey(typedChar))
+                            {
+                                var result = this.nextCommandTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
                                 ShowCompletion(typedChar);
 
-                            return result;
+                                return result;
+                            }
+                        }
+                        else
+                        {
+                            // Handle commit keys 
+                            // Check if the typed char is a commit key 
+                            if (IsCommitKey(typedChar))
+                            {
+                                if (activeSession.SelectedCompletionSet.SelectionStatus.IsSelected)
+                                    activeSession.Commit();
+                                else
+                                    activeSession.Dismiss();
+
+                                var result = this.nextCommandTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
+                                // Check we should trigger completion after comitting the previous session (for example, after typing dot '.') 
+                                if (IsTriggerKey(typedChar))
+                                    ShowCompletion(typedChar);
+
+                                return result;
+                            }
                         }
                     }
                 }
             }
-
+            catch(Exception ex)
+            {
+                System.Windows.MessageBox.Show("Unable to load Hyperstore compiler assembly. Ensure you are the last version installed of the Hyperstore Designer and the last version of the Hyperstore Domain Language Nuget package.");
+            }
             // we haven't handled this command so pass it onto the next target 
             return this.nextCommandTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
