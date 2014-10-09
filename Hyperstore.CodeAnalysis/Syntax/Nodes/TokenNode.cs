@@ -11,31 +11,40 @@ namespace Hyperstore.CodeAnalysis.Syntax
     {
         private Irony.Parsing.Token token;
 
-        public HyperstoreSyntaxTree SyntaxTree { get; internal set; }
+        public HyperstoreSyntaxTree SyntaxTree
+        {
+            get { return Location != null ? Location.SyntaxTree : null; }
+            internal set { Location.SyntaxTree = value; }
+        }
 
-        public SourceSpan Span { get; private set; }
+        public Location Location { get; private set; }
 
-        public SourceSpan FullSpan
+        public TextSpan FullSpan
         {
             get
             {
-                var startPos = Span;
+                var startPos = Location.SourceSpan.Start;
+                var length = Location.SourceSpan.Length;
                 if (LeadingTrivia != null)
                 {
                     var trivia = LeadingTrivia.FirstOrDefault();
                     if (trivia != null)
-                        startPos = trivia.Span;
+                    {
+                        startPos = trivia.Span.Location.Position;
+                        length += trivia.Span.Length;
+                    }
                 }
 
-                var endPos = Span;
                 if (TrailingTrivia != null)
                 {
                     var trivia = TrailingTrivia.LastOrDefault();
                     if (trivia != null)
-                        endPos = trivia.Span;
+                    {
+                        length += trivia.Span.Length;
+                    }
                 }
 
-                return new SourceSpan(startPos.Location, endPos.Location.Position + endPos.Length - startPos.Location.Position);
+                return new TextSpan(startPos, length);
             }
         }
 
@@ -62,7 +71,7 @@ namespace Hyperstore.CodeAnalysis.Syntax
         public SyntaxToken(Irony.Parsing.Token token)
         {
             this.token = token;
-            Span = new SourceSpan(token.Location, token.Length);
+            Location = new Location(null, new TextSpan(token.Location, token.Length));
         }
 
         public override string ToString()

@@ -10,7 +10,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
     {
         private readonly HyperstoreCompilation _compilation;
 
-        internal DomainSymbol CurrentDomain
+        internal MergedDomain MergedDomain
         {
             get;
             set;
@@ -41,17 +41,18 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         private void AddDiagnostic(Symbol symbol, string msg, params string[] args)
         {
-            Compilation.AddDiagnostic(symbol.SyntaxTokenOrNode.AsNode(), msg, args);
+            foreach(var loc in symbol.Locations)
+                Compilation.AddDiagnostic(loc, msg, args);
         }
 
         private void AddDiagnostic(Syntax.SyntaxNode node, string msg, params string[] args)
         {
-            Compilation.AddDiagnostic(node, msg, args);
+            Compilation.AddDiagnostic(node.Location, msg, args);
         }
 
         private void AddDiagnostic(Syntax.SyntaxToken token, string msg, params string[] args)
         {
-            Compilation.AddDiagnostic(token, msg, args);
+            Compilation.AddDiagnostic(token.Location, msg, args);
         }
 
         private void CheckConstraints(IEnumerable<ConstraintSymbol> constraints)
@@ -116,16 +117,14 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
         public void VisitUsingSymbol(UsingSymbol uses)
         {
-            var domain = CurrentDomain;
-
             var referencedDomain = Compilation.ResolveDomain(uses.Domain, uses.DomainUri.Text);
             if (referencedDomain == null)
             {
-                Compilation.AddDiagnostic(uses.DomainUri, "Unable to found referenced domain {0}", uses.DomainUri.Text);
+                Compilation.AddDiagnostic(uses.DomainUri.Location, "Unable to found referenced domain {0}", uses.DomainUri.Text);
             }
-            else if (referencedDomain.QualifiedName == domain.QualifiedName)
+            else if (referencedDomain.QualifiedName == MergedDomain.QualifiedName)
             {
-                Compilation.AddDiagnostic(uses.DomainUri, "A domain cannot reference itself {0}", uses.DomainUri.Text);
+                Compilation.AddDiagnostic(uses.DomainUri.Location, "A domain cannot reference itself {0}", uses.DomainUri.Text);
             }
         }
 

@@ -116,9 +116,9 @@ namespace Hyperstore.CodeAnalysis.Editor
                 errorTask.Priority = TaskPriority.Normal; 
                 errorTask.ErrorCategory = TaskErrorCategory.Error;
                 errorTask.Text = diag.Message;
-                errorTask.Line = diag.Location.Line;
-                errorTask.Column = diag.Location.Column;
-                errorTask.Document = diag.Location.SourceFile;
+                errorTask.Line = diag.Location.SourceSpan.Line;
+                errorTask.Column = diag.Location.SourceSpan.Column;
+                errorTask.Document = diag.Location.SyntaxTree.SourceFilePath;
                 errorTask.Navigate += NavigateDocument;
                 this.ErrorListProvider.Tasks.Add(errorTask);
             }

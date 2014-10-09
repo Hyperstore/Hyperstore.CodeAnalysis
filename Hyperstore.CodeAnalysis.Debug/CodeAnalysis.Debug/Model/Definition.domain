@@ -1,10 +1,12 @@
 // Sample Domain model definition
 // Use Hyperstore Domain Language Editor extension to edit this file.
-domain ConsoleApplication1.MyModel 
+domain ConsoleApplication1.MyModel extends "others.domain"
 {
-	uses "others.domain" as o;
+	def partial entity NamedElement {
+		Name2 : string;
+	}
 
-    def entity Library extends o.NamedElement
+    def entity Library extends NamedElement
     {
         Books   => Book*   : LibraryHasBooks;			
         Members => Member* : LibraryHasMembers;
@@ -16,7 +18,7 @@ domain ConsoleApplication1.MyModel
         Copies : int;
     }
 	
-    def entity Member extends o.NamedElement {
+    def entity Member extends NamedElement {
         Library *<= Library : LibraryHasMembers;
     }
 

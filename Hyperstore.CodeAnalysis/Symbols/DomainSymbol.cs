@@ -119,5 +119,18 @@ namespace Hyperstore.CodeAnalysis.Symbols
         public string ExtendedDomainPath { get { return ExtendedDomainUri != null ? ExtendedDomainUri.Text : null; } }
 
         public bool IsPartial { get { return ExtendedDomainUri != null; } }
+
+        bool IDomainSymbol.TryGetMember(string name, out ITypeSymbol symbol)
+        {
+            TypeSymbol s;
+            if (Members.TryGetValue(name, out s))
+            {
+                symbol = s;
+                return true;
+            }
+
+            symbol = null;
+            return false;
+        }
     }
 }

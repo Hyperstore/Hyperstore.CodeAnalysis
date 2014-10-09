@@ -20,7 +20,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
         {
             get
             {
-                return _compilation.Diagnostics;
+                return _compilation.GetDiagnostics();
             }
         }
 

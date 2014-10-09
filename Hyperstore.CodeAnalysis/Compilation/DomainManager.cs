@@ -11,6 +11,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
     public class SemanticModel
     {
         public HyperstoreSyntaxTree SyntaxTree { get; private set; }
+
         internal IModelBuilder Model { get; private set; }
 
         public IDomainSymbol Domain { get { return Model != null ? Model.Domain : null; } }
@@ -41,11 +42,9 @@ namespace Hyperstore.CodeAnalysis.Compilation
             walker.Visit(Domain);
         }
 
-        public ISymbol GetSymbol(HyperstoreSpan span)
+        public IEnumerable<Diagnostic> GetDiagnostics()
         {
-            var visitor = new SymbolBeforePositionFinder(span);
-            Visit(visitor);
-            return visitor.Symbol;
+            return Compilation.GetDiagnostics().Where(d => d.Location.SyntaxTree == SyntaxTree);
         }
     }
 
@@ -177,15 +176,15 @@ namespace Hyperstore.CodeAnalysis.Compilation
             get { return _models.Values; }
         }
 
-        protected string NormalizeUri(IDomainSymbol domain, string uri)
+        protected string NormalizeUri(HyperstoreSyntaxTree syntaxTree, string uri)
         {
-            var filePath = domain.SyntaxTokenOrNode.SyntaxTree.SourceFilePath;
+            var filePath = syntaxTree.SourceFilePath;
             return filePath != null ? System.IO.Path.Combine(System.IO.Path.GetDirectoryName(filePath), uri) : uri;
         }
 
-        public IModelBuilder FindDomain(IDomainSymbol domain, string uri)
+        public IModelBuilder FindDomain(HyperstoreSyntaxTree syntaxTree, string uri)
         {
-            var normalizedPath = NormalizeUri(domain, uri);
+            var normalizedPath = NormalizeUri(syntaxTree, uri);
             SemanticModel entry;
             if (_models.TryGetValue(normalizedPath, out entry))
                 return entry.Model;
@@ -199,12 +198,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
             return null;
         }
 
-        internal ITypeSymbol FindTypeSymbol(DomainSymbol currentDomain, string name)
+        internal ITypeSymbol FindTypeSymbol(IDomainSymbol currentDomain, string name)
         {
             if (String.IsNullOrWhiteSpace(name))
                 return null;
 
-            DomainSymbol domain = null;
+            IDomainSymbol domain = null;
             var pos = name.LastIndexOf('.');
             if (pos > 0)
             {
@@ -219,10 +218,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     var uses = currentDomain.Usings.FirstOrDefault(u => String.CompareOrdinal(u.Name, alias) == 0);
                     if (uses != null)
                     {
-                        var model = FindDomain(currentDomain, uses.Path);
+                        var model = FindDomain(currentDomain.Locations.First().SyntaxTree, uses.Path);
                         if (model != null)
                         {
-                            domain = model.Domain as DomainSymbol;
+                            domain = model.Domain;
                         }
                     }
                 }
@@ -235,16 +234,16 @@ namespace Hyperstore.CodeAnalysis.Compilation
             if (domain == null)
                 return null;
 
-            TypeSymbol symbol;
-            if (domain.Members.TryGetValue(name, out symbol))
+            ITypeSymbol symbol;
+            if (domain.TryGetMember(name, out symbol))
                 return symbol;
 
             if (currentDomain.ExtendedDomainPath != null)
             {
-                var model = FindDomain(currentDomain, currentDomain.ExtendedDomainPath);
+                var model = FindDomain(currentDomain.Locations.First().SyntaxTree, currentDomain.ExtendedDomainPath);
                 if( model != null && model.Domain != null)
                 {
-                    if (((DomainSymbol)model.Domain).Members.TryGetValue(name, out symbol))
+                    if (model.Domain.TryGetMember(name, out symbol))
                         return symbol;
                 }
             }

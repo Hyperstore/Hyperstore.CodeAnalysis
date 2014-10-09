@@ -32,7 +32,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
         {
             Keywords = new HashSet<string>
             {
-                "domain", "extends", "extern", "interface", "error", "warning", "valueObject", "enum", "as", "def", "entity", "constraints", "relationship", "implements", "where", "compute", "select", "check", "validate", "command", "uses"
+                "domain", "extends", "extern", "interface", "error", "warning", "valueObject", "enum", "as", "def", "entity", "constraints", "relationship", "implements", "where", "compute", "select", "check", "validate", "command", "use", "partial"
             };
         }
 
@@ -157,7 +157,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
             return r;
         }
 
-        [System.Runtime.CompilerServices.MethodImpl( System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private TokenInfo NextTokenSafe()
         {
             try
@@ -171,29 +171,29 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
             return TokenInfo.EOF;
         }
 
-        private TokenInfo NextToken(bool isInRegion=false)
+        private TokenInfo NextToken(bool isInRegion = false)
         {
-                SkipWhiteSpace();
+            SkipWhiteSpace();
 
-                TokenInfo token;
-                if (_currentChar == '{' && _lastToken.IsPreCSharpCodeToken(isInRegion))
-                {
-                    var r = new CSharpCodeParser(_buffer, _position).Parse();
-                    token = new TokenInfo(TokenKind.CSharpCode, CreateSpan(_position, r.Item1 - _position), null, r.Item2);
-                    _position = r.Item1 + 1;
-                    NextChar(); // Skip final }
-                }
-                else if (_currentChar == Eof)
-                    token = TokenInfo.EOF;
-                else if (_currentChar == '\"')
-                    token = ParseBlock(TokenKind.String, '\"', false);
-                else if (_currentChar == '[')
-                    token = ParseBlock(TokenKind.Attribute, ']', true);
-                else
-                    token = ParseToken();
+            TokenInfo token;
+            if (_currentChar == '{' && _lastToken.IsPreCSharpCodeToken(isInRegion))
+            {
+                var r = new CSharpCodeParser(_buffer, _position).Parse();
+                token = new TokenInfo(TokenKind.CSharpCode, CreateSpan(_position, r.Item1 - _position), null, r.Item2);
+                _position = r.Item1 + 1;
+                NextChar(); // Skip final }
+            }
+            else if (_currentChar == Eof)
+                token = TokenInfo.EOF;
+            else if (_currentChar == '\"')
+                token = ParseBlock(TokenKind.String, '\"', false);
+            else if (_currentChar == '[')
+                token = ParseBlock(TokenKind.Attribute, ']', true);
+            else
+                token = ParseToken();
 
-                _lastToken = token;
-                return token;
+            _lastToken = token;
+            return token;
         }
 
         private TokenInfo ParseToken()

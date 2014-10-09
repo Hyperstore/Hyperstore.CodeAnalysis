@@ -70,10 +70,9 @@ namespace Hyperstore.CodeAnalysis.Symbols
 
         private void RecalculateSpan(QualifiedNameSyntax source, SyntaxToken end)
         {
-            var beginPos = source.Span.Location.Position < end.Span.Location.Position ? source.Span : end.Span;
-            var endPos = source.Span.Location.Position < end.Span.Location.Position ? end.Span : source.Span;
-            var span = new Irony.Parsing.SourceSpan(beginPos.Location, (endPos.Location.Position + endPos.Length) - beginPos.Location.Position);
-            SyntaxTokenOrNode = new TokenOrNode(new Hyperstore.CodeAnalysis.Syntax.SyntaxNode.EmptyNode(span, SyntaxTokenOrNode.SyntaxTree));
+            var beginPos = source.Location.SourceSpan.Start < end.Location.SourceSpan.Start ? source.Location.SourceSpan : end.Location.SourceSpan;
+            var endPos = source.Location.SourceSpan.Start < end.Location.SourceSpan.Start ? end.Location.SourceSpan : source.Location.SourceSpan;
+            ReplaceLocation( new Location(source.SyntaxTree, new TextSpan( beginPos.Start, endPos.End - beginPos.Start)));
         }
 
         private void CalculateCardinality(bool sourceMultiplicity, bool endMultiplicity)

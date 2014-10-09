@@ -48,14 +48,13 @@
     <Compile Include="Compilation\HyperstoreCompiler.cs" />
     <Compile Include="Compilation\IDomainResolver.cs" />
     <Compile Include="Compilation\IModelBuilder.cs" />
+    <Compile Include="Compilation\Merger\MergedDomain.cs" />
     <Compile Include="Compilation\ModelBuilder.cs" />
-    <Compile Include="Compilation\ModelMap.cs" />
     <Compile Include="Compilation\SemanticContext _Properties.cs" />
     <Compile Include="Compilation\SemanticContext _References.cs" />
     <Compile Include="Compilation\SemanticContext.cs" />
     <Compile Include="Compilation\SemanticContext_Elements.cs" />
     <Compile Include="Compilation\Span.cs" />
-    <Compile Include="Compilation\SymbolFinder.cs" />
     <Compile Include="Generation\CodeHelper.cs" />
     <Compile Include="Generation\CSharpGenerator.cs" />
     <Compile Include="Generation\HyperstoreGeneratorContext.cs" />

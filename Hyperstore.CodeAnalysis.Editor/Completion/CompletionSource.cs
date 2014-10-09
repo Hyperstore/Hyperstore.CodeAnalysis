@@ -117,7 +117,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         case "compute":
                             return declarations;
                         case "(":
-                            BuildTypeDeclarations(declarations, forReference:true);
+                            BuildTypeDeclarations(declarations, forReference: true);
                             return declarations;
                     }
 
@@ -137,7 +137,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         {
                             declarations.Add(new Declaration { Title = "as", Type = DeclarationType.Keyword });
                         }
-                        else if( definitionState == DefinitionState.Domain)
+                        else if (definitionState == DefinitionState.Domain)
                         {
                             declarations.Add(new Declaration { Title = "extends", Type = DeclarationType.Keyword });
                         }
@@ -302,7 +302,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             }
         }
 
-        private void BuildTypeDeclarations(List<Declaration> declarations, string tokenToExtends = null, IDomainSymbol domain = null, string alias = null, bool forReference = false, bool recursive=true)
+        private void BuildTypeDeclarations(List<Declaration> declarations, string tokenToExtends = null, IDomainSymbol domain = null, string alias = null, bool forReference = false, bool recursive = true)
         {
             var source = domain ?? _domain;
 
@@ -346,8 +346,8 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             if (source.ExtendedDomainPath != null)
             {
                 var extendedDomain = _compilation.ResolveDomain(_domain, source.ExtendedDomainPath);
-                if (extendedDomain != null )
-                    BuildTypeDeclarations(declarations, tokenToExtends, extendedDomain.Domain, null, forReference, false); 
+                if (extendedDomain != null)
+                    BuildTypeDeclarations(declarations, tokenToExtends, extendedDomain.Domain, null, forReference, false);
             }
 
             if (tokenToExtends == null && !forReference)
@@ -361,7 +361,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
             foreach (var uses in _domain.Usings)
             {
                 var domainUsed = _compilation.ResolveDomain(_domain, uses.DomainUri);
-                if (domainUsed != null )
+                if (domainUsed != null)
                     BuildTypeDeclarations(declarations, tokenToExtends, domainUsed.Domain, uses.Name, forReference, false);
             }
         }

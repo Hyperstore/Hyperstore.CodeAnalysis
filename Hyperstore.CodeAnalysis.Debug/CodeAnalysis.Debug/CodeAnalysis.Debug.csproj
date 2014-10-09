@@ -34,11 +34,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Hyperstore">
-      <HintPath>..\packages\Hyperstore.0.9.134.0\lib\net45\Hyperstore.dll</HintPath>
+    <Reference Include="Hyperstore, Version=0.9.135.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Hyperstore.0.9.135.0\lib\net45\Hyperstore.dll</HintPath>
     </Reference>
-    <Reference Include="Hyperstore.Platform">
-      <HintPath>..\packages\Hyperstore.0.9.134.0\lib\net45\Hyperstore.Platform.dll</HintPath>
+    <Reference Include="Hyperstore.Platform, Version=0.9.135.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Hyperstore.0.9.135.0\lib\net45\Hyperstore.Platform.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable">

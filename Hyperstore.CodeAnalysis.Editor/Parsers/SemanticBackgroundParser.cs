@@ -15,7 +15,8 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
 {
     class SemanticBackgroundParser : BackgroundParser
     {
-        public HyperstoreCompilation Compilation { get; private set; }
+        private Lazy<HyperstoreCompilation> _compilation = new Lazy<HyperstoreCompilation>(() => HyperstoreCompilation.Create(null, new VSHyperstoreResolver()));
+        public HyperstoreCompilation Compilation { get { return _compilation.Value; } }
         private IDomainSymbol _lastValidDomain;
 
         public IDomainSymbol LastValidDomain { get { return _lastValidDomain; } set { _lastValidDomain = value; } }
@@ -31,26 +32,21 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
             Stopwatch stopwatch = Stopwatch.StartNew();
             var doc = TextBuffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
 
-            //do
-            //{
-            //var    original = _compiler;
             var snapshot = TextBuffer.CurrentSnapshot;
             var tree = HyperstoreSyntaxTree.ParseText(snapshot.GetText(), doc.FilePath);
-            if (Compilation == null)
-                Compilation = HyperstoreCompilation.Create(new HyperstoreSyntaxTree[] { tree }, new VSHyperstoreResolver());
-            else
-                Compilation.AddSyntaxTree(tree);
+            Compilation.AddSyntaxTree(tree);
 
+            var model = Compilation.GetSemanticModel(tree);
             var diags = new List<DiagnosticInfo>();
-            foreach (var diagnostic in Compilation.Diagnostics)
+            foreach (var diagnostic in (model != null ? model.GetDiagnostics() : tree.GetDiagnostics()))
             {
                 var diag = new DiagnosticInfo();
-                diag.Span = snapshot.CreateTrackingSpan(new Span(diagnostic.Location.Position, diagnostic.Location.Length), SpanTrackingMode.EdgeExclusive);
+                diag.Span = snapshot.CreateTrackingSpan(new Span(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length), SpanTrackingMode.EdgeExclusive);
                 diag.Diagnostic = diagnostic;
                 diags.Add(diag);
             }
 
-            var model = Compilation.GetSemanticModel(tree);
+
             if (model != null && model.Domain != null)
                 Interlocked.Exchange(ref _lastValidDomain, model.Domain);
 

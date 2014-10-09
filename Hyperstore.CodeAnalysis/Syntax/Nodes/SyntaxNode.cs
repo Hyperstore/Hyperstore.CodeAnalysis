@@ -11,16 +11,6 @@ namespace Hyperstore.CodeAnalysis.Syntax
 {
     public abstract class SyntaxNode : IAstNodeInit
     {
-        internal class EmptyNode : Hyperstore.CodeAnalysis.Syntax.SyntaxNode
-        {
-
-            public EmptyNode(SourceSpan span, HyperstoreSyntaxTree syntaxTree)
-            {
-                Span = span;
-                SyntaxTree = syntaxTree;
-            }
-        }
-
         private readonly List<Hyperstore.CodeAnalysis.Syntax.SyntaxNode> _childNodes = new List<Hyperstore.CodeAnalysis.Syntax.SyntaxNode>();
         private readonly List<Hyperstore.CodeAnalysis.Syntax.TokenOrNode> _childNodesAndTokens = new List<Hyperstore.CodeAnalysis.Syntax.TokenOrNode>();
 
@@ -38,22 +28,22 @@ namespace Hyperstore.CodeAnalysis.Syntax
             InitCore(context, parseNode);
         }
 
-        public HyperstoreSyntaxTree SyntaxTree { get; internal set; }
+        public HyperstoreSyntaxTree SyntaxTree
+        {
+            get { return Location != null ? Location.SyntaxTree : null; }
+            internal set { Location.SyntaxTree = value; }
+        }
 
         protected virtual void InitCore(AstContext context, ParseTreeNode treeNode)
         {
-            Span = treeNode.Span;
+            Location = new Location(null, new TextSpan(treeNode.Span));
             treeNode.AstNode = this;
         }
 
         #endregion
 
-        public SourceSpan Span { get; private set; }
+        public Location Location { get; private set; }
 
-        public int Position
-        {
-            get { return Span.Location.Position; }
-        }
 
         public Hyperstore.CodeAnalysis.Syntax.SyntaxNode Parent { get; set; }
 

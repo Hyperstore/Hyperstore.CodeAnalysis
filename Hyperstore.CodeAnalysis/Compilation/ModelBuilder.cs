@@ -34,28 +34,32 @@ namespace Hyperstore.CodeAnalysis.Compilation
             var name = domainNode.QualifiedName.FullName;
             Domain = new DomainSymbol(domainNode, domainNode.QualifiedName);
             if (String.IsNullOrEmpty(name))
-                Compilation.AddDiagnostic(domainNode.QualifiedName, "Domain name is required");
+                Compilation.AddDiagnostic(domainNode.QualifiedName.Location, "Domain name is required");
 
             if (domainNode.Extends != null)
             {
-                var partial = domainNode.Extends.Text;
-                if (String.IsNullOrEmpty(partial))
+                var extension = domainNode.Extends.Text;
+                if (String.IsNullOrEmpty(extension))
                 {
-                    Compilation.AddDiagnostic(domainNode.Extends, "A domain path is required.");
-                } 
-                else 
+                    Compilation.AddDiagnostic(domainNode.Extends.Location, "A domain path is required.");
+                }
+                else
                 {
                     try
                     {
-                        var extendedDomain = Compilation.DomainManager.FindDomain(Domain, partial);
+                        var extendedDomain = Compilation.DomainManager.FindDomain(syntaxTree, extension);
                         if (extendedDomain == null)
                         {
-                            Compilation.AddDiagnostic(domainNode.Extends, "Unable to found domain to extends {0}", partial);
+                            Compilation.AddDiagnostic(domainNode.Extends.Location, "Unable to found domain to extends {0}", extension);
+                        }
+                        else if (extendedDomain.Domain.QualifiedName != name)
+                        {
+                            Compilation.AddDiagnostic(domainNode.Extends.Location, "Extension must have the same name than the extended domain {0}", name);
                         }
                     }
                     catch (Exception)
                     {
-                        Compilation.AddDiagnostic(domainNode.Extends, "Invalid domain path {0}", partial);
+                        Compilation.AddDiagnostic(domainNode.Extends.Location, "Invalid domain path {0}", extension);
                     }
                 }
 
@@ -80,7 +84,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             {
                 var name = node.Name.Text;
                 if (attributes.Any(a => String.CompareOrdinal(a.Name, name) == 0))
-                    Compilation.AddDiagnostic(node.Name, "Duplicate attribute {0}", name);
+                    Compilation.AddDiagnostic(node.Name.Location, "Duplicate attribute {0}", name);
                 else
                 {
                     attributes.Add(new AttributeSymbol(node, parent, node.Name)
@@ -100,7 +104,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     symbol.Condition = new CSharpCodeSymbol(c.Condition, symbol, c.Condition.Text, kind == ConstraintKind.Compute ? CSharpCodeKind.Compute : CSharpCodeKind.Constraint);
                     symbol.Kind = kind;
                     if (kind == ConstraintKind.Compute && c.ErrorLevel != null)
-                        Compilation.AddDiagnostic(c.ErrorLevel, "Syntax error. Expected C# code block.");
+                        Compilation.AddDiagnostic(c.ErrorLevel.Location, "Syntax error. Expected C# code block.");
                     if (kind != ConstraintKind.Compute)
                         symbol.AsError = c.ErrorLevel.Text == "error";
                     return symbol;
@@ -139,8 +143,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 CommandSymbol command;
                 if (Domain.Members.TryGetValue(elementName, out tElement))
                 {
-                        Compilation.AddDiagnostic(commandNode.Name, "Duplicate element name {0}", elementName);
-                        continue;
+                    Compilation.AddDiagnostic(commandNode.Name.Location, "Duplicate element name {0}", elementName);
+                    continue;
                 }
                 else
                 {
@@ -150,24 +154,24 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
                 BuildAttributes(command, command.Attributes, commandNode.Attributes);
 
-                  var set = new HashSet<string>();
-                  foreach (var member in commandNode.Properties)
-                  {
-                      var memberName = member.Name.Text;
-                      if (!set.Add(memberName) || command.Properties.Any(m => m.Name == memberName))
-                      {
-                          Compilation.AddDiagnostic(member.Name, "Duplicate member {0} in element {1}", memberName, elementName);
-                          continue;
-                      }
+                var set = new HashSet<string>();
+                foreach (var member in commandNode.Properties)
+                {
+                    var memberName = member.Name.Text;
+                    if (!set.Add(memberName) || command.Properties.Any(m => m.Name == memberName))
+                    {
+                        Compilation.AddDiagnostic(member.Name.Location, "Duplicate member {0} in element {1}", memberName, elementName);
+                        continue;
+                    }
 
-                      var prop = member as Syntax.CommandMemberDeclarationSyntax;
-                      if (prop != null)
-                      {
-                          var p = new CommandPropertySymbol(this.Compilation, member, command, prop.PropertyType, prop.Name);
-                          BuildAttributes(p, p.Attributes, member.Attributes);
-                          command.Properties.Add(p);
-                      }
-                  }
+                    var prop = member as Syntax.CommandMemberDeclarationSyntax;
+                    if (prop != null)
+                    {
+                        var p = new CommandPropertySymbol(this.Compilation, member, command, prop.PropertyType, prop.Name);
+                        BuildAttributes(p, p.Attributes, member.Attributes);
+                        command.Properties.Add(p);
+                    }
+                }
             }
         }
 
@@ -185,7 +189,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     element = tElement as ValueObjectSymbol;
                     if (element == null || (!element.IsPartial && !isPartial))
                     {
-                        Compilation.AddDiagnostic(node.Name, "Duplicate element name {0}", elementName);
+                        Compilation.AddDiagnostic(node.Name.Location, "Duplicate element name {0}", elementName);
                         continue;
                     }
                 }
@@ -217,7 +221,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     element = tElement as ElementSymbol;
                     if (element == null || !(element is T) || (!element.IsPartial && !isPartial))
                     {
-                        Compilation.AddDiagnostic(node.Name, "Duplicate element name {0}", elementName);
+                        Compilation.AddDiagnostic(node.Name.Location, "Duplicate element name {0}", elementName);
                         continue;
                     }
                 }
@@ -240,7 +244,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     var memberName = member.Name.Text;
                     if (!set.Add(memberName) || element.Members.Any(m => m.Name == memberName))
                     {
-                        Compilation.AddDiagnostic(member.Name, "Duplicate member {0} in element {1}", memberName, elementName);
+                        Compilation.AddDiagnostic(member.Name.Location, "Duplicate member {0} in element {1}", memberName, elementName);
                         continue;
                     }
 
@@ -254,13 +258,13 @@ namespace Hyperstore.CodeAnalysis.Compilation
                         p.DefaultValue = prop.DefaultValue.Kind != null && prop.DefaultValue.Kind.Text == "=" ? new CSharpCodeSymbol(prop.DefaultValue, p, prop.DefaultValue.Code.Text, CSharpCodeKind.DefaultValue) : null;
 
                         if (prop.DefaultValue.Kind != null && prop.DefaultValue.Kind.Text == "where" && p.WhereClause == null)
-                            Compilation.AddDiagnostic(prop, "Where clause can not be empty.");
+                            Compilation.AddDiagnostic(prop.Location, "Where clause can not be empty.");
 
                         if (prop.DefaultValue.Kind != null && prop.DefaultValue.Kind.Text == "select" && p.SelectClause == null)
-                            Compilation.AddDiagnostic(prop, "Select clause can not be empty.");
+                            Compilation.AddDiagnostic(prop.Location, "Select clause can not be empty.");
 
                         if (prop.DefaultValue.Kind != null && prop.DefaultValue.Kind.Text == "=" && p.DefaultValue == null)
-                            Compilation.AddDiagnostic(prop, "Default value can not be empty.");
+                            Compilation.AddDiagnostic(prop.Location, "Default value can not be empty.");
 
                         BuildConstraints(p, p.Constraints, prop.Constraints);
                         BuildAttributes(p, p.Attributes, member.Attributes);
@@ -321,7 +325,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             {
                 var name = node.Name.Text;
                 if (Domain.Members.ContainsKey(name))
-                    Compilation.AddDiagnostic(node.Name, "Duplicate element name {0}", name);
+                    Compilation.AddDiagnostic(node.Name.Location, "Duplicate element name {0}", name);
                 else
                 {
                     var symbol = new EnumSymbol(node, Domain, node.Name);
@@ -334,7 +338,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     {
                         var txt = val.Text;
                         if (!set.Add(txt))
-                            Compilation.AddDiagnostic(val, "Duplicate value {0} in enum {1}", txt, name);
+                            Compilation.AddDiagnostic(val.Location, "Duplicate value {0} in enum {1}", txt, name);
                     }
                     symbol.Values = new List<string>(set);
                 }
@@ -365,7 +369,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     }
                 }
                 if (Domain.Members.ContainsKey(alias))
-                    Compilation.AddDiagnostic(external.Alias, "Duplicate element name {0}", alias);
+                    Compilation.AddDiagnostic(external.Alias.Location, "Duplicate element name {0}", alias);
                 else
                     Domain.Members.Add(alias, new ExternSymbol(external, Domain, external.Alias != null ? external.Alias : external.QualifiedName) { FullName = qn, Kind = kind });
             }
@@ -378,7 +382,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 var alias = stmt.Alias.Text;
                 var uri = stmt.Uri.Text;
                 if (Domain.Usings.Any(d => alias == d.Name))
-                    Compilation.AddDiagnostic(stmt.Alias, "Duplicate alias {0}", alias);
+                    Compilation.AddDiagnostic(stmt.Alias.Location, "Duplicate alias {0}", alias);
                 else
                 {
                     var symbol = new UsingSymbol(stmt, Domain, stmt.Alias, stmt.Uri);

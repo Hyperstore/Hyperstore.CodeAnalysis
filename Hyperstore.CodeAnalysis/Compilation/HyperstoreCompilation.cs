@@ -18,13 +18,10 @@ namespace Hyperstore.CodeAnalysis.Compilation
         private DomainMerger _merger;
 
         #region Diagnostics
-        public IEnumerable<Diagnostic> Diagnostics
+        public IEnumerable<Diagnostic> GetDiagnostics()
         {
-            get
-            {
-                ProcessSemanticRules();
-                return DomainManager.SyntaxDiagnostics.Union(_diagnostics);
-            }
+            ProcessSemanticRules();
+            return DomainManager.SyntaxDiagnostics.Union(_diagnostics);
         }
 
         public bool HasSyntaxErrors
@@ -58,24 +55,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
             _diagnostics.Add(diagnostic);
         }
 
-        internal void AddDiagnostic(Syntax.SyntaxToken node, string message, params string[] args)
+        internal void AddDiagnostic(Location location, string message, params string[] args)
         {
             _diagnostics.Add(Diagnostic.Create(
                                     args.Length == 0 ? message : String.Format(message, args),
                                     DiagnosticSeverity.Error,
-                                    node != null ? node.Span : Irony.Parsing.SourceSpan.Empty,
-                                    node.SyntaxTree.SourceFilePath
-                ));
-        }
-
-        internal void AddDiagnostic(Syntax.SyntaxNode node, string message, params string[] args)
-        {
-            _diagnostics.Add(Diagnostic.Create(
-                                    args.Length == 0 ? message : String.Format(message, args),
-                                    DiagnosticSeverity.Error,
-                                    node != null ? node.Span : Irony.Parsing.SourceSpan.Empty,
-                                    node.SyntaxTree.SourceFilePath
-
+                                    location
                 ));
         }
         #endregion
@@ -87,14 +72,16 @@ namespace Hyperstore.CodeAnalysis.Compilation
 
             Clear();
 
-            // Creation de la table des symboles
-            foreach (var syntaxTree in syntaxTrees)
+            if (syntaxTrees != null)
             {
-                DomainManager.AddSyntaxTree(syntaxTree);
+                foreach (var syntaxTree in syntaxTrees)
+                {
+                    DomainManager.AddSyntaxTree(syntaxTree);
+                }
             }
         }
 
-        
+
         public static HyperstoreCompilation Create(IEnumerable<HyperstoreSyntaxTree> syntaxTrees, ISemanticModelResolver resolver = null, HyperstoreCompilationOptions options = HyperstoreCompilationOptions.Compilation)
         {
             return new HyperstoreCompilation(syntaxTrees, resolver, options);
@@ -177,7 +164,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
             if (_merger != null || HasSyntaxErrors)
                 return;
 
-             DomainManager.Build();
+            _merger = null;
+            DomainManager.Build();
             _merger = new DomainMerger(this);
 
             if (!HasCompilationErrors && Options == HyperstoreCompilationOptions.Compilation)
@@ -189,23 +177,41 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     var walker = new HyperstoreSymbolWalker(visitor);
                     foreach (var domain in _merger.Domains)
                     {
-                        visitor.CurrentDomain = domain;
+                        visitor.MergedDomain = domain as MergedDomain;
                         walker.Visit(domain);
                     }
                 }
             }
         }
 
-        internal ITypeSymbol FindTypeSymbol(DomainSymbol currentDomain, string name)
+        internal ITypeSymbol FindTypeSymbol(IDomainSymbol currentDomain, string name)
         {
+            if (_merger != null)
+            {
+                var domain = _merger.Domains.FirstOrDefault(d => String.Compare(currentDomain.QualifiedName, d.QualifiedName, StringComparison.Ordinal) == 0);
+                if (domain != null)
+                    currentDomain = domain;
+            }
+
             return DomainManager.FindTypeSymbol(currentDomain, name);
         }
 
         public IDomainSymbol ResolveDomain(IDomainSymbol domain, string uri)
         {
-            if (domain == null || uri == null)
+            foreach (var loc in domain.Locations)
+            {
+                var s = ResolveDomain(loc.SyntaxTree, uri);
+                if (s != null)
+                    return s;
+            }
+            return null;
+        }
+
+        public IDomainSymbol ResolveDomain(HyperstoreSyntaxTree syntaxTree, string uri)
+        {
+            if (syntaxTree == null || uri == null)
                 return null;
-            var model = DomainManager.FindDomain(domain, uri);
+            var model = DomainManager.FindDomain(syntaxTree, uri);
             return model != null ? model.Domain : null;
         }
 

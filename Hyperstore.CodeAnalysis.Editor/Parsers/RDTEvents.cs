@@ -156,7 +156,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
             }
         }
 
-        private static TServiceInterface GetService<TServiceInterface, TService>(IServiceProvider serviceProvider)
+        protected static TServiceInterface GetService<TServiceInterface, TService>(IServiceProvider serviceProvider)
             where TServiceInterface : class
             where TService : class
         {

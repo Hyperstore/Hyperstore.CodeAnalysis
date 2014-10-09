@@ -11,7 +11,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
     {
         private HyperstoreCompilation _compilation;
 
-        public IEnumerable<DomainSymbol> Domains { get; private set; }
+        public IEnumerable<IDomainSymbol> Domains { get; private set; }
 
         public DomainMerger(HyperstoreCompilation compilation)
         {
@@ -23,70 +23,81 @@ namespace Hyperstore.CodeAnalysis.Compilation
             if (Domains != null)
                 return;
 
-            List<DomainSymbol> mergedDomains = new List<DomainSymbol>();
-            var domainByNames = _compilation.DomainManager.Models.Select(d => d.Domain).GroupBy(d => d.QualifiedName);
-            foreach (var domains in domainByNames)
-            {
-                if (domains.Count() == 1)
-                {
-                    mergedDomains.Add(domains.First());
-                    continue;
-                }
+            List<IDomainSymbol> mergedDomains = new List<IDomainSymbol>();
+            var modelByNames = GetDomainsRecursive( _compilation.DomainManager.Models )
+                               .Select(d => d)
+                               .GroupBy(d => d.Domain.QualifiedName);
 
-                var mergedDomain = domains.FirstOrDefault(d => d.ExtendedDomainUri == null);
-                if( mergedDomain == null)
-                {
-                    mergedDomain = domains.First();
-                }
+            foreach (var models in modelByNames)
+            {
+                var mergedDomain = new MergedDomain();
                 mergedDomains.Add(mergedDomain);
 
-                foreach (var domain in domains)
+                foreach (var model in models)
                 {
-                    if (domain == mergedDomain)
-                        continue;
+                    var domain = model.Domain;
+                    MergeDomains(mergedDomain, domain);
+                }
+            }
 
+            Domains = mergedDomains;
+        }
 
-                    foreach (var uses in domain.Usings)
+        private IEnumerable<DomainSymbol> GetDomainsRecursive(IEnumerable<ModelBuilder> models)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var queue = new Queue<IModelBuilder>(models);
+
+            while (queue.Count > 0)
+            {
+                var model = queue.Dequeue() as ModelBuilder;
+                var sourceFile = model.SyntaxTree.SourceFilePath;
+                if (set.Add(sourceFile))
+                {
+                    var domain = model.Domain;
+                    yield return domain;
+
+                    if (domain.ExtendedDomainPath != null)
                     {
-                        if (mergedDomain.Usings.Any(e => e.Name == uses.Name))
-                        {
-                            _compilation.AddDiagnostic(uses.NameToken, "A using declaration already exists with the same alias {0}", uses.Name);
-                            continue;
-                        }
-                        mergedDomain.Usings.Add(uses);
-                    }
-
-                    foreach (var member in domain.Members.Values)
-                    {
-                        TypeSymbol element;
-                        if (mergedDomain.Members.TryGetValue(member.Name, out element) && !domain.IsPartial)
-                        {
-                            _compilation.AddDiagnostic(member.NameToken, "Duplicate member {0}", member.Name);
-                        }
-                        else if (element is IExternSymbol)
-                        {
-                            mergedDomain.Members.Add(element.Name, element);
-                        }
-                        else if (element != null)
-                        {
-                            var mergedElement = element as ElementSymbol;
-                            var elementToMerge = member as ElementSymbol;
-
-                            if (mergedElement == null || elementToMerge == null || element.GetType() != member.GetType() || (!mergedElement.IsPartial && !elementToMerge.IsPartial))
-                            {
-                                _compilation.AddDiagnostic(member.NameToken, "A member with the same name {0} already exists. Uses partial if your want override an existing type", member.Name);
-                                continue;
-                            }
-                            MergeElement(mergedElement, elementToMerge);
-                        }
-                        else
-                        {
-                            mergedDomain.Members.Add(member.Name, member);
-                        }
+                        queue.Enqueue( _compilation.DomainManager.FindDomain(model.SyntaxTree, domain.ExtendedDomainPath) );
                     }
                 }
             }
-            Domains = mergedDomains;
+        }
+
+        private void MergeDomains(MergedDomain mergedDomain, DomainSymbol domain)
+        {
+            if (!mergedDomain.AddDomain(domain))
+                return;
+
+            foreach (var member in domain.Members.Values)
+            {
+                TypeSymbol element;
+                if (mergedDomain.Members.TryGetValue(member.Name, out element) && !domain.IsPartial)
+                {
+                    _compilation.AddDiagnostic(member.NameToken.Location, "Duplicate member {0}", member.Name);
+                }
+                else if (element is IExternSymbol)
+                {
+                    mergedDomain.Members.Add(element.Name, element);
+                }
+                else if (element != null)
+                {
+                    var mergedElement = element as ElementSymbol;
+                    var elementToMerge = member as ElementSymbol;
+
+                    if (mergedElement == null || elementToMerge == null || element.GetType() != member.GetType() || (!mergedElement.IsPartial && !elementToMerge.IsPartial))
+                    {
+                        _compilation.AddDiagnostic(member.NameToken.Location, "A member with the same name {0} already exists. Uses 'def partial' if your want override an existing type", member.Name);
+                        continue;
+                    }
+                    MergeElement(mergedElement, elementToMerge);
+                }
+                else
+                {
+                    mergedDomain.Members.Add(member.Name, member);
+                }
+            }
         }
 
         private void MergeElement(ElementSymbol mergedElement, ElementSymbol memberToMerge)
@@ -102,7 +113,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
             {
                 if (mergedElement.Members.Any(m => m.Name == member.Name))
                 {
-                    _compilation.AddDiagnostic(member.NameToken, "Duplicate member name {0}", member.Name);
+                    _compilation.AddDiagnostic(member.NameToken.Location, "Duplicate member name {0}", member.Name);
                     continue;
                 }
                 mergedElement.Members.Add(member);

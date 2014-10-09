@@ -41,13 +41,14 @@ namespace Hyperstore.CodeAnalysis.MsBuild
                 {
                     foreach (var diag in compiler.Diagnostics)
                     {
+                        var span = diag.Location.SourceSpan;
                         switch (diag.Severity)
                         {
                             case DiagnosticSeverity.Error:
-                                Log.LogError("Hyperstore", null, null, diag.Location.SourceFile, diag.Location.Line, diag.Location.Column, diag.Location.Line, diag.Location.Column + diag.Location.Length, diag.Message);
+                                Log.LogError("Hyperstore", null, null, diag.Location.SyntaxTree.SourceFilePath, span.Line, span.Column, span.Line, span.Column + span.Length, diag.Message);
                                 break;
                             case DiagnosticSeverity.Warning:
-                                Log.LogWarning("Hyperstore", null, null, diag.Location.SourceFile, diag.Location.Line, diag.Location.Column, diag.Location.Line, diag.Location.Column + diag.Location.Length, diag.Message);
+                                Log.LogWarning("Hyperstore", null, null, diag.Location.SyntaxTree.SourceFilePath, span.Line, span.Column, span.Line, span.Column + span.Length, diag.Message);
                                 break;
                             default:
                                 break;

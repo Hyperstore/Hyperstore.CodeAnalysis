@@ -12,8 +12,6 @@ namespace Hyperstore.CodeAnalysis.Compilation
         public void VisitPropertyReferenceSymbol(PropertyReferenceSymbol reference)
         {
             var parent = reference.Parent as ElementSymbol;
-            // Take the merged domain
-            var domain = CurrentDomain;
 
             if (reference.Relationship != null)
             {
@@ -31,12 +29,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 if (reference.Definition.End != null)
                 {
                     var relationshipName = String.Format("{0}{1}{2}", parent.Name, reference.Definition.IsEmbedded ? "Has" : "References", reference.Definition.End.Name);
-                    var existing = Compilation.FindTypeSymbol(domain, relationshipName);
+                    var existing = Compilation.FindTypeSymbol(MergedDomain, relationshipName);
                     if (existing == null)
                     {
                         // Change the embedded state
                         var relationshipName2 = String.Format("{0}{1}{2}", parent.Name, !reference.Definition.IsEmbedded ? "Has" : "References", reference.Definition.End.Name);
-                        var existing2 = Compilation.FindTypeSymbol(domain, relationshipName2);
+                        var existing2 = Compilation.FindTypeSymbol(MergedDomain, relationshipName2);
                         if (existing2 != null)
                         {
                             existing = existing2;
@@ -49,8 +47,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     // Create a new virtual relationship 
                     if (existing == null)
                     {
-                        var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, parent, reference.Definition.End, reference.Definition.Cardinality, reference.Definition.IsEmbedded), relationshipName);
-                        domain.Members.Add(relationshipName, vrel);
+                        var vrel = new VirtualRelationshipSymbol(null, MergedDomain, new RelationshipDefinitionSymbol(null, null, parent, reference.Definition.End, reference.Definition.Cardinality, reference.Definition.IsEmbedded), relationshipName);
+                        MergedDomain.Members.Add(relationshipName, vrel);
                         vrel.Definition.PropertySource = reference.Name;
                     }
                     else
@@ -69,8 +67,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
             }
             else if (reference.RelationshipReference.Value == null)
             {
-                var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, parent, reference.Definition.End, reference.Definition.Cardinality, reference.Definition.IsEmbedded), reference.RelationshipReference.Name);
-                domain.Members.Add(vrel.Name, vrel);
+                var vrel = new VirtualRelationshipSymbol(null, MergedDomain, new RelationshipDefinitionSymbol(null, null, parent, reference.Definition.End, reference.Definition.Cardinality, reference.Definition.IsEmbedded), reference.RelationshipReference.Name);
+                MergedDomain.Members.Add(vrel.Name, vrel);
                 vrel.Definition.PropertySource = reference.Name;
             }
             else
@@ -92,7 +90,6 @@ namespace Hyperstore.CodeAnalysis.Compilation
         public void VisitOppositeReferenceSymbol(OppositeReferenceSymbol reference)
         {
             var parent = reference.Parent as ElementSymbol;
-            var domain = CurrentDomain;
 
             if (reference.Definition.Source == null)
             {
@@ -104,12 +101,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 if (reference.Definition.Source != null)
                 {
                     var relationshipName = String.Format("{0}{1}{2}", reference.Definition.Source.Name, reference.Definition.IsEmbedded ? "Has" : "References", parent.Name);
-                    var existing = Compilation.FindTypeSymbol(domain, relationshipName);
+                    var existing = Compilation.FindTypeSymbol(MergedDomain, relationshipName);
                     if (existing == null)
                     {
                         // Change the embedded state
                         var relationshipName2 = String.Format("{0}{1}{2}", reference.Definition.Source.Name, !reference.Definition.IsEmbedded ? "Has" : "References", parent.Name);
-                        var existing2 = Compilation.FindTypeSymbol(domain, relationshipName2);
+                        var existing2 = Compilation.FindTypeSymbol(MergedDomain, relationshipName2);
                         if (existing2 != null)
                         {
                             existing = existing2;
@@ -122,8 +119,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     // Create a new virtual relationship
                     if (existing == null)
                     {
-                        var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, reference.Definition.Source, parent, reference.Definition.Cardinality, reference.Definition.IsEmbedded),relationshipName);
-                        domain.Members.Add(relationshipName, vrel);
+                        var vrel = new VirtualRelationshipSymbol(null, MergedDomain, new RelationshipDefinitionSymbol(null, null, reference.Definition.Source, parent, reference.Definition.Cardinality, reference.Definition.IsEmbedded),relationshipName);
+                        MergedDomain.Members.Add(relationshipName, vrel);
                         vrel.Definition.PropertyEnd = reference.Name;
                     }
                     else
@@ -142,8 +139,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
             }
             else if (reference.RelationshipReference.Value == null)
             {
-                var vrel = new VirtualRelationshipSymbol(null, domain, new RelationshipDefinitionSymbol(reference.SyntaxTokenOrNode.AsNode(), null, reference.Definition.Source, parent, reference.Definition.Cardinality, reference.Definition.IsEmbedded), reference.RelationshipReference.Name);
-                domain.Members.Add(vrel.Name, vrel);
+                var vrel = new VirtualRelationshipSymbol(null, MergedDomain, new RelationshipDefinitionSymbol(null, null, reference.Definition.Source, parent, reference.Definition.Cardinality, reference.Definition.IsEmbedded), reference.RelationshipReference.Name);
+                MergedDomain.Members.Add(vrel.Name, vrel);
                 vrel.Definition.PropertyEnd = reference.Name;
             }
             else

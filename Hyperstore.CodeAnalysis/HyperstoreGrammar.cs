@@ -124,7 +124,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
                 MakeStarRule(usesDeclarationList, usesDeclaration);
 
             usesDeclaration.Rule =
-                ToTerm("uses", "uses") + stringLiteral + "as" + identifier + ";";
+                ToTerm("use", "use") + stringLiteral + "as" + identifier + ";";
 
             // Extern
             externalDeclarations.Rule =
@@ -188,7 +188,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
                 MakeStarRule(commandMemberDeclarationList, commandMemberDeclaration);
 
             commandMemberDeclaration.Rule =
-                 generationAttributeList + identifier + ":" + qualified_identifier  + ";";
+                 generationAttributeList + identifier + ":" + qualified_identifier + ";";
 
             memberDeclarations.Rule =
               MakeStarRule(memberDeclarations, memberDeclaration);
@@ -271,7 +271,7 @@ namespace Hyperstore.CodeAnalysis.DomainLanguage
             MarkPunctuation("{", "}", ":", ";", "(", ")", ",", "[", "]");
             this.RegisterBracePair("{", "}");
             this.MarkTransient(memberDeclaration, elementDeclaration);
-            RegisterKeywords("uses", "use", "partial", "where", "error", "valueObject", "constraints", "warning", "entity", "extern", "*", "domain", "relationship", "command", "interface", "=>", "->", "<-", "<=", "def", "enum", "extends", "implements", "as", "constraint", "check", "validate", "compute");
+            RegisterKeywords("use", "partial", "where", "error", "valueObject", "constraints", "warning", "entity", "extern", "*", "domain", "relationship", "command", "interface", "=>", "->", "<-", "<=", "def", "enum", "extends", "implements", "as", "constraint", "check", "validate", "compute");
 
             LanguageFlags = LanguageFlags.CreateAst | Irony.Parsing.LanguageFlags.NewLineBeforeEOF;
         }

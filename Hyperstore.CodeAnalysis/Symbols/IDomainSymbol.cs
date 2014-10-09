@@ -16,5 +16,7 @@ namespace Hyperstore.CodeAnalysis.Symbols
         System.Collections.Generic.IEnumerable<IUsingSymbol> Usings { get; }
 
         string ExtendedDomainPath { get; }
+
+        bool TryGetMember(string name, out ITypeSymbol symbol);
     }
 }

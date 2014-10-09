@@ -43,9 +43,9 @@ namespace Hyperstore.CodeAnalysis.Syntax
             get { return _token != null ? _token.SyntaxTree : _node.SyntaxTree; }
         }
 
-        public SourceSpan Span
+        public Location Location
         {
-            get { return _token != null ? _token.Span : _node.Span; }
+            get { return _token != null ? _token.Location : _node.Location; }
         }
     }
 }

@@ -36,8 +36,7 @@ namespace Hyperstore.CodeAnalysis.Syntax
                 _diagnostics.Add(Diagnostic.Create(
                                     m.Message,
                                     m.Level == global::Irony.ErrorLevel.Error ? DiagnosticSeverity.Error : m.Level == global::Irony.ErrorLevel.Warning ? DiagnosticSeverity.Warning : DiagnosticSeverity.Info,
-                                    m.SourceSpan,
-                                    path
+                                    new Location(this, new TextSpan(m.SourceSpan))
                                     )
                                  );
                 HasErrors |= m.Level == Irony.ErrorLevel.Error;
