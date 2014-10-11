@@ -8,12 +8,13 @@
 
 # Build results
 
-[Dd]ebug/
-[Rr]elease/
+[Dd]ebug*/
+[Rr]elease*/
 x64/
 build/
 [Bb]in/
 [Oo]bj/
+[Ll]ib/
 
 # Enable "build/" folder in the NuGet Packages folder since NuGet packages use it for MSBuild targets
 !packages/*/build/
@@ -97,7 +98,7 @@ publish/
 
 # NuGet Packages Directory
 ## TODO: If you have NuGet Package Restore enabled, uncomment the next line
-#packages/
+packages/
 
 # Windows Azure Build Output
 csx
@@ -154,5 +155,3 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
-/lib/Release45
-/Hyperstore.CodeAnalysis.Debug/packages
