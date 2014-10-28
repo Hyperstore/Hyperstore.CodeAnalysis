@@ -1,143 +1,168 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IUsingSymbol" Collapsed="true">
-    <Position X="0.5" Y="1.75" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IUsingSymbol">
+    <Position X="0.5" Y="2.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAQAA=</HashCode>
       <FileName>Symbols\IUsingSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IAttributeSymbol" Collapsed="true">
-    <Position X="2.75" Y="1.75" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IAttributeSymbol">
+    <Position X="6" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IAttributeSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ICommandSymbol" Collapsed="true">
-    <Position X="7.75" Y="4.5" Width="1.75" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ICommandSymbol">
+    <Position X="3.25" Y="2.5" Width="1.75" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAA=</HashCode>
       <FileName>Symbols\ICommandSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IConstraintSymbol" Collapsed="true">
-    <Position X="10.75" Y="1.75" Width="1.75" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IConstraintSymbol">
+    <Position X="3.25" Y="7.75" Width="1.75" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAADAAAAAAAAAAAAAAAEAAAAAAAAAIAAAAAA=</HashCode>
       <FileName>Symbols\IConstraintSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ICSharpCodeSymbol" Collapsed="true">
-    <Position X="13" Y="1.75" Width="1.75" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ICSharpCodeSymbol">
+    <Position X="1" Y="9.75" Width="1.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAABAAAAAAAAgAAAAAAAAAAAAAAAAAAAgAAA=</HashCode>
       <FileName>Symbols\ICSharpCodeSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IDomainSymbol" Collapsed="true">
-    <Position X="1.5" Y="3" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IDomainSymbol">
+    <Position X="0.5" Y="4.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>ACAAAgAAAAAAAAAAAAAQAAAIAAAAIAgIgAAAAAAACAA=</HashCode>
+      <HashCode>ACAAAgAAAAAAAAAAAAAQAgAICAAAIAgIgAAAAAAACEA=</HashCode>
       <FileName>Symbols\IDomainSymbol.cs</FileName>
     </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Commands" />
+      <Property Name="Elements" />
+      <Property Name="Enums" />
+      <Property Name="Externals" />
+      <Property Name="ValueObjects" />
+      <Property Name="Usings" />
+    </ShowAsCollectionAssociation>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IElementSymbol" Collapsed="true">
-    <Position X="5.75" Y="4.5" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IElementSymbol">
+    <Position X="6.25" Y="5.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAgAAAAAAAAAAAAAAQAACAABQABAoAAAAABACAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAQAAAAABQABAoAAAAABACAAA=</HashCode>
       <FileName>Symbols\IElementSymbol.cs</FileName>
     </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Constraints" />
+      <Property Name="Properties" />
+    </ShowAsCollectionAssociation>
   </Interface>
   <Interface Name="Hyperstore.CodeAnalysis.Symbols.IEntitySymbol" Collapsed="true">
-    <Position X="6.75" Y="6" Width="1.5" />
+    <Position X="8.75" Y="5.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IEntitySymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IEnumSymbol" Collapsed="true">
-    <Position X="11.75" Y="4.5" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IEnumSymbol">
+    <Position X="3.5" Y="5.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAA=</HashCode>
       <FileName>Symbols\IEnumSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IExternSymbol" Collapsed="true">
-    <Position X="9.75" Y="4.5" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IExternSymbol">
+    <Position X="0.75" Y="7.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAJAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IExternSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
   <Interface Name="Hyperstore.CodeAnalysis.Symbols.IMemberSymbol" Collapsed="true">
-    <Position X="3.75" Y="3" Width="1.5" />
+    <Position X="11" Y="7.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IMemberSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.INamedSymbol" Collapsed="true">
-    <Position X="4.75" Y="1.75" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.INamedSymbol">
+    <Position X="6.25" Y="2.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAABAAAAAAAAAQAAAAAAAAAAAAAAAAEAA=</HashCode>
       <FileName>Symbols\INamedSymbol.cs</FileName>
     </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Attributes" />
+    </ShowAsCollectionAssociation>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IOppositeReferenceSymbol" Collapsed="true">
-    <Position X="0.75" Y="6" Width="2.25" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IOppositeReferenceSymbol">
+    <Position X="9" Y="11.75" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IOppositeReferenceSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IPropertyReferenceSymbol" Collapsed="true">
-    <Position X="3.5" Y="6" Width="2.25" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IPropertyReferenceSymbol">
+    <Position X="4" Y="12" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IPropertyReferenceSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IPropertySymbol" Collapsed="true">
-    <Position X="1.25" Y="4.5" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IPropertySymbol">
+    <Position X="6" Y="9" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAACAAAAAAAAAAAAAAAAAABAIBIAAAACAAAAAAg=</HashCode>
       <FileName>Symbols\IPropertySymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IReferenceSymbol" Collapsed="true">
-    <Position X="3.5" Y="4.5" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IReferenceSymbol">
+    <Position X="6.75" Y="11.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAABAAAAAAA=</HashCode>
       <FileName>Symbols\IReferenceSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IRelationshipDefinitionSymbol" Collapsed="true">
-    <Position X="8" Y="1.75" Width="2.25" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IRelationshipDefinitionSymbol">
+    <Position X="11.5" Y="9" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAIAAACAAgAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAA=</HashCode>
+      <HashCode>ACIAAACAAgAAAAAAAAAAAAAAAAAAIAIAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IRelationshipDefinitionSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IRelationshipSymbol" Collapsed="true">
-    <Position X="8.75" Y="6" Width="1.75" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IRelationshipSymbol">
+    <Position X="8.75" Y="6.75" Width="1.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\IRelationshipSymbol.cs</FileName>
     </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Definition" />
+    </ShowAsAssociation>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ISymbol" Collapsed="true">
-    <Position X="7" Y="0.5" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ISymbol">
+    <Position X="9" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAQAQAAgAAAAAAAAAAAAABAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAIAQAQAAgAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\ISymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ITypeSymbol" Collapsed="true">
-    <Position X="7" Y="3" Width="1.5" />
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.ITypeSymbol">
+    <Position X="11.5" Y="3" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Symbols\ITypeSymbol.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Hyperstore.CodeAnalysis.Symbols.IValueObjectSymbol">
+    <Position X="3.25" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAABAgAQAAAAAAAAA=</HashCode>
+      <FileName>Symbols\IValueObjectSymbol.cs</FileName>
     </TypeIdentifier>
   </Interface>
   <Font Name="Segoe UI" Size="9" />

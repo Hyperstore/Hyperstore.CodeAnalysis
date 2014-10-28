@@ -17,6 +17,8 @@ namespace Hyperstore.CodeAnalysis.Compilation
         internal DomainManager DomainManager { get; private set; }
         private DomainMerger _merger;
 
+        private string[] _configurations;
+
         #region Diagnostics
         public IEnumerable<Diagnostic> GetDiagnostics()
         {
@@ -65,8 +67,11 @@ namespace Hyperstore.CodeAnalysis.Compilation
         }
         #endregion
 
-        private HyperstoreCompilation(IEnumerable<HyperstoreSyntaxTree> syntaxTrees, ISemanticModelResolver resolver, HyperstoreCompilationOptions options)
+        private HyperstoreCompilation(string configurations, IEnumerable<HyperstoreSyntaxTree> syntaxTrees, ISemanticModelResolver resolver, HyperstoreCompilationOptions options)
         {
+            if (configurations != null)
+                _configurations = configurations.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToArray();
+
             Options = options;
             DomainManager = new DomainManager(this, resolver);
 
@@ -82,9 +87,9 @@ namespace Hyperstore.CodeAnalysis.Compilation
         }
 
 
-        public static HyperstoreCompilation Create(IEnumerable<HyperstoreSyntaxTree> syntaxTrees, ISemanticModelResolver resolver = null, HyperstoreCompilationOptions options = HyperstoreCompilationOptions.Compilation)
+        public static HyperstoreCompilation Create(string configurations, IEnumerable<HyperstoreSyntaxTree> syntaxTrees, ISemanticModelResolver resolver = null, HyperstoreCompilationOptions options = HyperstoreCompilationOptions.Compilation)
         {
-            return new HyperstoreCompilation(syntaxTrees, resolver, options);
+            return new HyperstoreCompilation(configurations, syntaxTrees, resolver, options);
         }
 
         public SemanticModel GetSemanticModel(HyperstoreSyntaxTree syntaxTree)
@@ -159,6 +164,12 @@ namespace Hyperstore.CodeAnalysis.Compilation
             return ctx.ToString();
         }
 
+        public IEnumerable<IDomainSymbol> GetMergedDomains()
+        {
+            ProcessSemanticRules();
+            return _merger != null ? _merger.Domains : Enumerable.Empty<IDomainSymbol>();
+        }
+
         public void ProcessSemanticRules()
         {
             if (_merger != null || HasSyntaxErrors)
@@ -224,6 +235,18 @@ namespace Hyperstore.CodeAnalysis.Compilation
         public IEnumerable<IExternSymbol> GetPrimitives()
         {
             return DomainManager.GetPrimitives();
+        }
+
+        internal bool IsValidForCurrentConfiguration(DomainSymbol domain)
+        {
+            if (this._configurations == null)
+                return true;
+            var attr = domain.Attributes.FirstOrDefault(a => String.Compare(a.Name, "target", StringComparison.OrdinalIgnoreCase) == 0);
+            if (attr == null || !attr.Arguments.Any())
+                return true;
+
+            var configs = attr.Arguments.First().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToArray();
+            return configs.Intersect(this._configurations).Any();
         }
     }
 }

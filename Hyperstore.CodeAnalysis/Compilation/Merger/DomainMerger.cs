@@ -24,7 +24,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 return;
 
             List<IDomainSymbol> mergedDomains = new List<IDomainSymbol>();
-            var modelByNames = GetDomainsRecursive( _compilation.DomainManager.Models )
+            var modelByNames = GetDomainsRecursive(_compilation.DomainManager.Models)
                                .Select(d => d)
                                .GroupBy(d => d.Domain.QualifiedName);
 
@@ -54,12 +54,15 @@ namespace Hyperstore.CodeAnalysis.Compilation
                 var sourceFile = model.SyntaxTree.SourceFilePath;
                 if (set.Add(sourceFile))
                 {
+                    if (!_compilation.IsValidForCurrentConfiguration(model.Domain))
+                        continue;
+
                     var domain = model.Domain;
                     yield return domain;
 
                     if (domain.ExtendedDomainPath != null)
                     {
-                        queue.Enqueue( _compilation.DomainManager.FindDomain(model.SyntaxTree, domain.ExtendedDomainPath) );
+                        queue.Enqueue(_compilation.DomainManager.FindDomain(model.SyntaxTree, domain.ExtendedDomainPath));
                     }
                 }
             }
@@ -73,36 +76,37 @@ namespace Hyperstore.CodeAnalysis.Compilation
             foreach (var member in domain.Members.Values)
             {
                 TypeSymbol element;
-                if (mergedDomain.Members.TryGetValue(member.Name, out element) && !domain.IsPartial)
+                if (mergedDomain.Members.TryGetValue(member.Name, out element))
                 {
-                    _compilation.AddDiagnostic(member.NameToken.Location, "Duplicate member {0}", member.Name);
-                }
-                else if (element is IExternSymbol)
-                {
-                    mergedDomain.Members.Add(element.Name, element);
-                }
-                else if (element != null)
-                {
-                    var mergedElement = element as ElementSymbol;
-                    var elementToMerge = member as ElementSymbol;
-
-                    if (mergedElement == null || elementToMerge == null || element.GetType() != member.GetType() || (!mergedElement.IsPartial && !elementToMerge.IsPartial))
+                    if (element != null)
                     {
-                        _compilation.AddDiagnostic(member.NameToken.Location, "A member with the same name {0} already exists. Uses 'def partial' if your want override an existing type", member.Name);
+                        if (element is IExternSymbol || element is ICommandSymbol || element is IValueObjectSymbol || element is IEnumSymbol)
+                        {
+                            _compilation.AddDiagnostic(member.NameToken.Location, "Duplicate member {0}", member.Name);
+                            continue;
+                        }
+
+                        var mergedElement = element as ElementSymbol;
+                        var elementToMerge = member as ElementSymbol;
+
+                        if (mergedElement == null || elementToMerge == null || element.GetType() != member.GetType())
+                        {
+                            _compilation.AddDiagnostic(member.NameToken.Location, "A member with the same name {0} already exists. Uses 'def partial' if your want override an existing type", member.Name);
+                            continue;
+                        }
+                        MergeElement(mergedElement, elementToMerge);
                         continue;
                     }
-                    MergeElement(mergedElement, elementToMerge);
                 }
-                else
-                {
-                    mergedDomain.Members.Add(member.Name, member);
-                }
+
+                mergedDomain.Members.Add(member.Name, member);
             }
         }
 
         private void MergeElement(ElementSymbol mergedElement, ElementSymbol memberToMerge)
         {
             mergedElement.Constraints.AddRange(memberToMerge.Constraints);
+            mergedElement.Attributes.AddRange(memberToMerge.Attributes);
 
             // Implements
             mergedElement.ImplementReferences.AddRange(memberToMerge.ImplementReferences);
@@ -111,12 +115,16 @@ namespace Hyperstore.CodeAnalysis.Compilation
             // members
             foreach (var member in memberToMerge.Members)
             {
-                if (mergedElement.Members.Any(m => m.Name == member.Name))
+                MemberSymbol other = mergedElement.Members.FirstOrDefault(m => m.Name == member.Name);
+                if (other != null)
                 {
-                    _compilation.AddDiagnostic(member.NameToken.Location, "Duplicate member name {0}", member.Name);
-                    continue;
+                    if (!member.TryMerge(other))
+                    {
+                        _compilation.AddDiagnostic(member.NameToken.Location, "All partial members must have the same definition. Member {0} definition is not correct.", member.Name);
+                    }
                 }
-                mergedElement.Members.Add(member);
+                else
+                    mergedElement.Members.Add(member);
             }
         }
     }

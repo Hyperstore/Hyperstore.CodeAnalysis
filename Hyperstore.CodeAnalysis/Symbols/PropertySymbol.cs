@@ -43,6 +43,35 @@ namespace Hyperstore.CodeAnalysis.Symbols
             visitor.VisitPropertySymbol(this);
         }
 
+        internal override bool TryMerge(MemberSymbol other)
+        {
+            var prop = other as PropertySymbol;
+            if (other == null ) //|| prop.PropertyTypeReference.Name != this.PropertyTypeReference.Name)
+                return false;
+
+            if( prop.WhereClause != null)
+            {
+                if (this.WhereClause != null)
+                    return false;
+                this.WhereClause = prop.WhereClause;
+            }
+            if (prop.SelectClause != null)
+            {
+                if (this.SelectClause != null)
+                    return false;
+                this.SelectClause = prop.SelectClause;
+            }
+            if (prop.DefaultValue != null)
+            {
+                if (this.DefaultValue != null)
+                    return false;
+                this.DefaultValue = prop.DefaultValue;
+            }
+            this.Attributes.AddRange(prop.Attributes);
+            this.Constraints.AddRange(prop.Constraints);
+            return true;
+        }
+
         public bool IsCalculatedProperty
         {
             get

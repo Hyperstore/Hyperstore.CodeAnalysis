@@ -68,7 +68,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
                     }
                 }
 
-                _compilation = HyperstoreCompilation.Create(trees.Where(t => t != null));
+                _compilation = HyperstoreCompilation.Create("C#", trees.Where(t => t != null));
                 if (_compilation.HasErrors)
                 {
                     ClearOutputFile();

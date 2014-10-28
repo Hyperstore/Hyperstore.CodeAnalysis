@@ -113,11 +113,11 @@ namespace Hyperstore.CodeAnalysis.Editor
                 var errorTask = new ErrorTask();
                 errorTask.CanDelete = false;
                 errorTask.Category = TaskCategory.All;
-                errorTask.Priority = TaskPriority.Normal; 
+                errorTask.Priority = TaskPriority.Normal;
                 errorTask.ErrorCategory = TaskErrorCategory.Error;
                 errorTask.Text = diag.Message;
-                errorTask.Line = diag.Location.SourceSpan.Line;
-                errorTask.Column = diag.Location.SourceSpan.Column;
+                errorTask.Line = diag.Location.SourceSpan.Line - 1;
+                errorTask.Column = diag.Location.SourceSpan.Column - 1;
                 errorTask.Document = diag.Location.SyntaxTree.SourceFilePath;
                 errorTask.Navigate += NavigateDocument;
                 this.ErrorListProvider.Tasks.Add(errorTask);

@@ -14,6 +14,7 @@ using Hyperstore.CodeAnalysis.Editor;
 
 namespace Hyperstore.CodeAnalysis.T4
 {
+    // <#@ Domain Processor="HyperstoreProcessor" [File="domain file"] [Target="JS,C#"]#>
     class HyperstoreProcessor : DirectiveProcessor
     {
         private StringBuilder _codeBuffer = new StringBuilder();
@@ -37,7 +38,7 @@ namespace Hyperstore.CodeAnalysis.T4
 
         public override string[] GetImportsForProcessingRun()
         {
-            return new string[0];
+            return new string[] {"Hyperstore.CodeAnalysis.Symbols", "System", "System.Linq"};
         }
 
         public override string GetPostInitializationCodeForProcessingRun()
@@ -57,13 +58,14 @@ namespace Hyperstore.CodeAnalysis.T4
             {
                 Path.Combine(Path.GetDirectoryName(location), "Hyperstore.CodeAnalysis.dll"),
                 Path.Combine(Path.GetDirectoryName(location), "Hyperstore.CodeAnalysis.Irony.dll"),
+                "System.Core",
                 location
             };
         }
 
         public override bool IsDirectiveSupported(string directiveName)
         {
-            return string.Compare(directiveName, "Domain", StringComparison.OrdinalIgnoreCase) == 0;
+            return string.Compare(directiveName, "Domains", StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         public override void ProcessDirective(string directiveName, IDictionary<string, string> arguments)
@@ -72,7 +74,13 @@ namespace Hyperstore.CodeAnalysis.T4
             if (filePath == null)
                 return;
 
-            _codeBuffer.AppendFormat("protected global::Hyperstore.CodeAnalysis.Symbols.IDomainSymbol Domain {{get {{return global::Hyperstore.CodeAnalysis.T4.HyperstoreProcessorHelper.LoadDomainFromFile(@\"{0}\");}} }}", filePath);
+            string config;
+            if (arguments.TryGetValue("Target", out config))
+                config = "\"" + config + "\"";
+            else
+                config= "null";
+
+            _codeBuffer.AppendFormat("protected global::System.Collections.Generic.IEnumerable<global::Hyperstore.CodeAnalysis.Symbols.IDomainSymbol> Domains {{get {{return global::Hyperstore.CodeAnalysis.T4.HyperstoreProcessorHelper.LoadDomainsFromFile({0}, @\"{1}\");}} }}", config, filePath);
             _codeBuffer.AppendLine();
         }
 
@@ -111,7 +119,7 @@ namespace Hyperstore.CodeAnalysis.T4
 
     public class HyperstoreProcessorHelper 
     {
-        public static IDomainSymbol LoadDomainFromFile(string filePath)
+        public static IEnumerable<IDomainSymbol> LoadDomainsFromFile(string config, string filePath)
         {
             string content;
             try
@@ -124,15 +132,14 @@ namespace Hyperstore.CodeAnalysis.T4
             }
 
             var tree = HyperstoreSyntaxTree.ParseText(content, filePath);
-            var compilation = HyperstoreCompilation.Create(new HyperstoreSyntaxTree[] { tree }, new VSHyperstoreResolver());
+            var compilation = HyperstoreCompilation.Create(config, new HyperstoreSyntaxTree[] { tree }, new VSHyperstoreResolver());
 
             if (compilation.HasErrors)
             {
                 return null;
             }
 
-            var model = compilation.GetSemanticModel(tree);
-            return model != null ? model.Domain : null;
+            return compilation.GetMergedDomains();
         }
     }
 }

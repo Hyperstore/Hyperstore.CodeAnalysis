@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Hyperstore.CodeAnalysis.Editor..e6846676-bad3-4f05-b6a9-d0722fa25d33" Version="0.9.269" Language="en-US" Publisher="Zenasoft" />
+    <Identity Id="Hyperstore.CodeAnalysis.Editor..e6846676-bad3-4f05-b6a9-d0722fa25d33" Version="0.9.273" Language="en-US" Publisher="Zenasoft" />
     <DisplayName>Hyperstore Domain Language Editor</DisplayName>
     <Description xml:space="preserve">Hyperstore domain language designer with syntax highlight, colorization and completion.</Description>
     <MoreInfo>http://www.hyperstore.org</MoreInfo>

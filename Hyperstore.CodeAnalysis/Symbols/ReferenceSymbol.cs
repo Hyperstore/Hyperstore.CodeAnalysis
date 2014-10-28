@@ -42,5 +42,15 @@ namespace Hyperstore.CodeAnalysis.Symbols
         {
             get { return this.Relationship; }
         }
+
+        internal override bool TryMerge(MemberSymbol other)
+        {
+            var prop = other as ReferenceSymbol;
+            if (other == null || !prop.Definition.IsEmbedded.Equals(this.Definition))
+                return false;
+
+            this.Attributes.AddRange(prop.Attributes);
+            return true;
+        }
     }
 }

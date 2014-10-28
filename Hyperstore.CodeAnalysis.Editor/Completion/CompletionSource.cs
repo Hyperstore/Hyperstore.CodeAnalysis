@@ -75,7 +75,11 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                 {
                     switch (token.Value)
                     {
-                        case "def":
+                        case "def" :
+                            declarations.Add(new Declaration { Title = "partial", Type = DeclarationType.Keyword });
+                            goto case "partial";
+
+                        case "partial":
                             declarations.Add(new Declaration { Title = "entity", Type = DeclarationType.Keyword });
                             declarations.Add(new Declaration { Title = "enum", Type = DeclarationType.Keyword });
                             declarations.Add(new Declaration { Title = "relationship", Type = DeclarationType.Keyword });
@@ -161,7 +165,10 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
                         if (token.Value == "implements")
                             BuildInterfaceDeclarations(declarations);
                         else
-                            BuildTypeDeclarations(declarations);
+                        {
+                            var tokenIdentifier = tokens.GetPreviousToken(token);
+                            BuildTypeDeclarations(declarations, tokenIdentifier != null ? tokenIdentifier.Value : null);
+                        }
                     }
                     return declarations;
                 }
@@ -313,7 +320,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Completion
 
             foreach (var elem in query)
             {
-                if (elem is IVirtualRelationshipSymbol)
+                if (elem is IVirtualRelationshipSymbol && tokenToExtends != null)
                     continue;
 
                 if (elem is IEntitySymbol || elem is IRelationshipSymbol || elem is IExternSymbol || elem is IValueObjectSymbol)

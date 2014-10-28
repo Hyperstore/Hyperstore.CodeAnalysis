@@ -13,5 +13,6 @@ namespace Hyperstore.CodeAnalysis.Symbols
         {
         }
 
+        internal abstract bool TryMerge(MemberSymbol other);
     }
 }

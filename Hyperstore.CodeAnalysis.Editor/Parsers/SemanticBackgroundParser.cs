@@ -15,7 +15,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
 {
     class SemanticBackgroundParser : BackgroundParser
     {
-        private Lazy<HyperstoreCompilation> _compilation = new Lazy<HyperstoreCompilation>(() => HyperstoreCompilation.Create(null, new VSHyperstoreResolver()));
+        private Lazy<HyperstoreCompilation> _compilation = new Lazy<HyperstoreCompilation>(() => HyperstoreCompilation.Create(null, null, new VSHyperstoreResolver()));
         public HyperstoreCompilation Compilation { get { return _compilation.Value; } }
         private IDomainSymbol _lastValidDomain;
 
@@ -24,7 +24,7 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
         public SemanticBackgroundParser(ITextBuffer textBuffer, TaskScheduler taskScheduler)
             : base(textBuffer, taskScheduler)
         {
-            ReparseDelay = TimeSpan.FromMilliseconds(300);
+            ReparseDelay = TimeSpan.FromMilliseconds(500);
         }
 
         protected override void ReParseImpl()
@@ -46,9 +46,9 @@ namespace Hyperstore.CodeAnalysis.Editor.Parser
                 diags.Add(diag);
             }
 
-
-            if (model != null && model.Domain != null)
-                Interlocked.Exchange(ref _lastValidDomain, model.Domain);
+            var m = Compilation.GetMergedDomains().FirstOrDefault(d => d.Locations.Any(l => l.SyntaxTree == tree));
+            if (m != null)
+                Interlocked.Exchange(ref _lastValidDomain, m);
 
             OnParseComplete(new HyperstoreParseResultEventArgs(diags, snapshot, stopwatch.Elapsed));
         }

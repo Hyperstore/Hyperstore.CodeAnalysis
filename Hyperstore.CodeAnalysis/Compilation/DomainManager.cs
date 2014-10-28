@@ -186,7 +186,7 @@ namespace Hyperstore.CodeAnalysis.Compilation
         {
             var normalizedPath = NormalizeUri(syntaxTree, uri);
             SemanticModel entry;
-            if (_models.TryGetValue(normalizedPath, out entry))
+            if (_models.TryGetValue(normalizedPath, out entry) && entry.Model != null)
                 return entry.Model;
 
             entry = _resolver.ResolveSemanticModel(normalizedPath);

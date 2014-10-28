@@ -391,7 +391,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                 if (Domain.IsObservable && !Domain.IsDynamic)
                     extends.Append(", System.ComponentModel.INotifyPropertyChanged");
 
-                if( clazz.Properties.Any(p=>p.Name == "Name" && p.PropertyType.Name=="string"))
+                if (clazz.Properties.Any(p => p.Name == "Name" && p.PropertyType.Name == "string"))
                     extends.Append(", Hyperstore.Modeling.INamedElement");
 
                 foreach (var att in clazz.Attributes.Where(a => a.Name == "attribute"))
@@ -931,7 +931,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                 }
             }
 
-            if (prop.Constraints.Count() > 0)
+            if (prop.Constraints.Any())
             {
                 using (ctx.Push(GenerationScope.MetadataOnBeforeLoad))
                 {
@@ -964,7 +964,7 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                 var startPropertyName = rel.Definition.SourceProperty != null ? ", \"" + rel.Definition.SourceProperty + "\"" : ", null";
                 var endPropertyName = rel.Definition.EndProperty != null ? ", \"" + rel.Definition.EndProperty + "\"" : ", null";
-
+          
                 if (clazz is IVirtualRelationshipSymbol || Domain.IsDynamic)
                 {
                     ctx.WriteLine(3, "{0} = new SchemaRelationship(\"{0}\", {1}, {2}, Cardinality.{3}, {4}, null{5}{6});", rel.Name, rel.Definition.Source.AsDefinitionVariable(Domain), rel.Definition.End.AsDefinitionVariable(Domain), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false", startPropertyName, endPropertyName);
