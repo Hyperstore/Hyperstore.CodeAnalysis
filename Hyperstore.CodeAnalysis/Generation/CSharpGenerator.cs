@@ -227,28 +227,55 @@ namespace Hyperstore.CodeAnalysis.Generation
                 var constraintType = hasValidationConstraints ? "IValidationValueObjectConstraint" : "ICheckValueObjectConstraint";
                 ctx.WriteLine(1, "public sealed partial class {0}Schema : Hyperstore.Modeling.Metadata.SchemaValueObject<{1}>, global::Hyperstore.Modeling.Metadata.Constraints.{2}<{1}>", valueObject.Name, type.FullName, constraintType);
                 ctx.WriteLine(1, "{{");
+                ctx.WriteLine(2, "private ISchemaInfo _underlyingSchema;");
+                ctx.WriteLine(2, "private object _defautValue;");
+                ctx.WriteLine(2, "private bool _defaultInitialized;");
 
                 ctx.WriteLine(2, "protected {0}Schema()", valueObject.Name);
                 ctx.WriteLine(2, "{{}}");
                 ctx.WriteLine();
-
 
                 ctx.WriteLine(2, "public {0}Schema(ISchema schema)", valueObject.Name);
                 ctx.WriteLine(3, ": base(schema)");
                 ctx.WriteLine(2, "{{}}");
                 ctx.WriteLine();
 
-                ctx.WriteLine(2, "protected override object Deserialize(SerializationContext ctx)");
+                ctx.WriteLine(2, "protected override void Initialize(ISchemaElement schemaElement, IDomainModel schema)");
                 ctx.WriteLine(2, "{{");
-                ctx.WriteLine(3, "return Hyperstore.Modeling.Metadata.Primitives.{0}Primitive.DeserializeValue(ctx);", TypeToPrimitive(type));
+                ctx.WriteLine(3, "base.Initialize(schemaElement, schema);");
+                ctx.WriteLine(3, "_underlyingSchema = schema.Store.GetSchemaInfo<{0}>();", TypeToPrimitive(type));
                 ctx.WriteLine(2, "}}");
                 ctx.WriteLine();
 
-                ctx.WriteLine(2, "protected override string Serialize(object data, IJsonSerializer serializer)");
+                ctx.WriteLine(2, "protected override object Deserialize(SerializationContext ctx)");
                 ctx.WriteLine(2, "{{");
-                ctx.WriteLine(3, "return Hyperstore.Modeling.Metadata.Primitives.{0}Primitive.SerializeValue(data);", TypeToPrimitive(type));
+                ctx.WriteLine(3, "return _underlyingSchema.Deserialize(ctx);");
                 ctx.WriteLine(2, "}}");
                 ctx.WriteLine();
+
+                ctx.WriteLine(2, "protected override object Serialize(object data)");
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "return _underlyingSchema.Serialize(data);");
+                ctx.WriteLine(2, "}}");
+                ctx.WriteLine();
+
+                ctx.WriteLine(2, "protected override object DefaultValue");
+                ctx.WriteLine(2, "{{");
+                ctx.WriteLine(3, "get");
+                ctx.WriteLine(3, "{{");
+                ctx.WriteLine(4, "if (!_defaultInitialized)");
+                ctx.WriteLine(4, "{{");
+                ctx.WriteLine(5, "_defautValue = _underlyingSchema.DefaultValue;");
+                ctx.WriteLine(5, "_defaultInitialized = true;");
+                ctx.WriteLine(4, "}}");
+                ctx.WriteLine(4, "return _defautValue;");
+                ctx.WriteLine(3, "}}");
+                ctx.WriteLine(3, "set");
+                ctx.WriteLine(3, "{{");
+                ctx.WriteLine(4, "_defaultInitialized = true;");
+                ctx.WriteLine(4, "_defautValue = value;");
+                ctx.WriteLine(3, "}}");
+                ctx.WriteLine(2, "}}");
 
                 ctx.WriteLine(2, "public void ExecuteConstraint({0} value, {0} oldValue, global::Hyperstore.Modeling.Metadata.Constraints.ConstraintContext ctx)", type.FullName);
                 ctx.WriteLine(2, "{{");
@@ -964,7 +991,7 @@ namespace Hyperstore.CodeAnalysis.Generation
 
                 var startPropertyName = rel.Definition.SourceProperty != null ? ", \"" + rel.Definition.SourceProperty + "\"" : ", null";
                 var endPropertyName = rel.Definition.EndProperty != null ? ", \"" + rel.Definition.EndProperty + "\"" : ", null";
-          
+
                 if (clazz is IVirtualRelationshipSymbol || Domain.IsDynamic)
                 {
                     ctx.WriteLine(3, "{0} = new SchemaRelationship(\"{0}\", {1}, {2}, Cardinality.{3}, {4}, null{5}{6});", rel.Name, rel.Definition.Source.AsDefinitionVariable(Domain), rel.Definition.End.AsDefinitionVariable(Domain), GetCardinalityAsString(rel.Definition.Cardinality), rel.Definition.IsEmbedded ? "true" : "false", startPropertyName, endPropertyName);
