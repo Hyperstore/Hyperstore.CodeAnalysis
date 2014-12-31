@@ -696,7 +696,7 @@ namespace Hyperstore.CodeAnalysis.Generation
                 }
             }
 
-            ctx.WriteLine(0, "Guid correlationId, long? version=null)");
+            ctx.WriteLine(0, "int correlationId, long? version=null)");
             ctx.WriteLine(3, ": base(domain.Name, domain.ExtensionName, version ?? DateTime.UtcNow.Ticks, correlationId)");
 
             ctx.WriteLine(2, "{{");
